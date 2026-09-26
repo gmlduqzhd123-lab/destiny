@@ -84,6 +84,10 @@
                 </div>
                 <p class="lead" id="todayText"></p>
                 <p class="small muted" id="todayRelation" style="margin:12px 0 0;"></p>
+                <div class="reframe" id="reframeWrap" style="display:none;">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnReframe">전화위복(轉禍爲福) 풀이 보기</button>
+                    <div class="reframe-text" id="reframeText"></div>
+                </div>
             </div>
 
             <div class="card">
@@ -116,6 +120,13 @@
             <div class="card">
                 <h3 class="card-title">개운(開運) 요소 <span class="sub" id="gaewunSub"></span></h3>
                 <div class="gaewun" id="gaewunGrid"></div>
+            </div>
+
+            <div class="card quote">
+                <h3 class="card-title">오늘의 고전 한 구절</h3>
+                <div class="hanmun" id="quoteHanmun"></div>
+                <div class="src" id="quoteSrc"></div>
+                <div class="kor" id="quoteKor"></div>
             </div>
 
             <div class="card keepsake-wrap">
@@ -168,6 +179,27 @@
                     <div class="ohaeng-bars" id="ohaengBars"></div>
                 </div>
                 <p class="small" id="ohaengText" style="margin:12px 0 0; line-height:1.7;"></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">MBTI × 사주 <span class="sub">타고난 기질과 지금의 성격</span></h3>
+                <div class="ilgan-title" id="crossName" style="color:var(--gold); margin-bottom:6px;"></div>
+                <p class="lead" id="crossText" style="font-size:0.95rem;"></p>
+                <p class="small" id="crossJudge" style="margin:10px 0 0; line-height:1.7;"></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">운의 흐름 <span class="sub" id="dwSub"></span></h3>
+                <div class="daewoon" id="dwList"></div>
+                <p class="small" id="dwNow" style="margin:10px 0 14px; line-height:1.7;"></p>
+                <div class="gh-item">
+                    <div class="hd"><span id="seunTitle"></span></div>
+                    <div class="tx" id="seunText"></div>
+                </div>
+                <div class="gh-item" style="margin-bottom:0;">
+                    <div class="hd"><span id="wolunTitle"></span></div>
+                    <div class="tx" id="wolunText"></div>
+                </div>
             </div>
 
             <div class="card">
@@ -231,6 +263,37 @@
             </div>
         </div>
 
+        <!-- ⑤ 기록 -->
+        <div class="tab-panel" data-panel="journal">
+            <div class="card">
+                <h3 class="card-title">운세 일지</h3>
+                <div class="streak">
+                    <div><div class="v" id="jStreak"></div><div class="l">연속 방문</div></div>
+                    <div><div class="v" id="jTotal"></div><div class="l">기록한 날</div></div>
+                    <div><div class="v" id="jGood"></div><div class="l">좋았던 날</div></div>
+                </div>
+                <div class="cal-head">
+                    <button type="button" id="calPrev" aria-label="이전 달">‹</button>
+                    <span class="ym" id="calYm"></span>
+                    <button type="button" id="calNext" aria-label="다음 달">›</button>
+                </div>
+                <div class="cal" id="calGrid"></div>
+                <div class="log-detail" id="logDetail"></div>
+                <p class="small muted center" style="margin:12px 0 0;">도장에는 그날의 십신이 새겨집니다. 기록은 이 기기에만 저장됩니다.</p>
+            </div>
+
+            <div class="card memo-area">
+                <h3 class="card-title">오늘 실제로 어땠나요?</h3>
+                <div class="rating" id="ratingBtns">
+                    <button type="button" data-rating="good">좋았어요</button>
+                    <button type="button" data-rating="soso">보통이었어요</button>
+                    <button type="button" data-rating="bad">아쉬웠어요</button>
+                </div>
+                <textarea id="memoText" maxlength="200" placeholder="오늘 있었던 일을 한 줄로 남겨 보세요."></textarea>
+                <button type="button" class="btn btn-gold" id="btnMemoSave">기록 저장</button>
+            </div>
+        </div>
+
         <button type="button" class="btn btn-ghost" id="btnReset">다른 사람 운세 보기</button>
         <p class="footer-note">명운은 재미로 보는 운세입니다. 중요한 결정은 스스로의 판단을 믿으세요.</p>
     </section>
@@ -242,6 +305,7 @@
         <button type="button" data-tab="saju"><span class="ic">命</span>사주</button>
         <button type="button" data-tab="compat"><span class="ic">緣</span>궁합</button>
         <button type="button" data-tab="tarot"><span class="ic">星</span>타로</button>
+        <button type="button" data-tab="journal"><span class="ic">記</span>기록</button>
     </div>
 </nav>
 
@@ -253,8 +317,10 @@
 <script src="js/data/fortune-data.js"></script>
 <script src="js/fortune.js"></script>
 <script src="js/data/tarot-data.js"></script>
+<script src="js/data/extra-data.js"></script>
 <script src="js/tarot.js"></script>
 <script src="js/compat.js"></script>
+<script src="js/journal.js"></script>
 <script src="js/keepsake.js"></script>
 <script src="js/app.js"></script>
 </body>

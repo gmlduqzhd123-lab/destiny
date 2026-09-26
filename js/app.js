@@ -106,6 +106,16 @@ const App = (() => {
         $('mbtiAdvice').textContent = FortuneData.mbti.advice[u.mbti][tone];
         $('missionText').textContent = g.mission;
 
+        // 점수가 낮은 날에만 '전화위복 풀이'를 보여 줍니다.
+        const low = Fortune.average(t.scores) < 66 || Math.min(t.scores.love, t.scores.money, t.scores.work) < 55;
+        $('reframeWrap').style.display = low ? 'block' : 'none';
+        $('reframeText').textContent = g.reframe;
+
+        const q = todayQuote();
+        $('quoteHanmun').textContent = q.hanmun;
+        $('quoteSrc').textContent = q.src;
+        $('quoteKor').textContent = q.kor;
+
         const e = SajuData.elements[state.profile.weak];
         $('gaewunSub').textContent = `부족한 ${e.hanja} 기운 채우기`;
         $('gaewunGrid').innerHTML = `
@@ -114,6 +124,77 @@ const App = (() => {
             <div><b>행운의 숫자</b><span>${e.numbers}</span></div>
             <div><b>행운의 물건</b><span>${e.item}</span></div>
             <div style="grid-column: span 2;"><b>개운 음식</b><span>${e.food}</span></div>`;
+    }
+
+    function todayQuote() {
+        // 고전 구절은 날짜마다 바뀌고, 같은 날에는 모두에게 같습니다.
+        return Engine.pick(ExtraData.quotes, Engine.prng('quote-' + Engine.ymd(new Date())));
+    }
+
+    function renderCross() {
+        const u = state.user, me = state.profile.saju.day.stem;
+        const c = ExtraData.cross[me.el][u.mbti[0]];
+        $('crossName').textContent = `${Saju.EL_HANJA[me.el]} × ${u.mbti[0] === 'E' ? '외향(E)' : '내향(I)'} · ${c.name}`;
+        $('crossText').textContent = c.text;
+        const J = ExtraData.judge;
+        let line;
+        if (me.el === 'wood') {
+            line = J.wood[u.mbti[3]];
+        } else {
+            const bornRational = J.rational.includes(me.el);
+            const nowRational = u.mbti[2] === 'T';
+            line = bornRational === nowRational ? J.same : J.diff(bornRational ? '이성·원칙' : '감성·직관', nowRational ? '이성(T)' : '감성(F)');
+        }
+        $('crossJudge').textContent = `${u.mbti} · ${FortuneData.mbti.nick[u.mbti]}. ${line}`;
+    }
+
+    function ageOn(date) {
+        const u = state.user;
+        const y = +u.birth.slice(0, 4), m = +u.birth.slice(4, 6), d = +u.birth.slice(6, 8);
+        let age = date.getFullYear() - y;
+        if (date.getMonth() + 1 < m || (date.getMonth() + 1 === m && date.getDate() < d)) age--;
+        return age;
+    }
+
+    function periodText(pillar, unit) {
+        const me = state.profile.saju.day.stem;
+        const god = SajuData.sipsin[Saju.tenGod(me, pillar.stem.i)];
+        const rel = Saju.branchRelation(state.profile.saju.day.branch.i, pillar.branch.i);
+        return {
+            title: `${pillar.stem.hanja}${pillar.branch.hanja}${unit} · ${god.name}(${god.hanja})의 ${unit === '년' ? '해' : '달'}`,
+            text: `${god.dw}입니다. 키워드는 ${god.kw}. ${ExtraData.periodRel[rel]}`.trim()
+        };
+    }
+
+    function renderFlow() {
+        const me = state.profile.saju.day.stem;
+        const dw = Saju.daewoon(state.profile.saju, state.user.gender);
+        const age = ageOn(new Date());
+        let cur = null;
+        dw.list.forEach(p => { if (age >= p.age) cur = p; });
+        $('dwSub').textContent = `대운 ${dw.forward ? '순행' : '역행'} · ${dw.startAge}세 시작`;
+        $('dwList').innerHTML = dw.list.map(p => {
+            const god = SajuData.sipsin[Saju.tenGod(me, p.stem.i)];
+            return `<div class="dw${p === cur ? ' now' : ''}">
+                ${p === cur ? '<div class="dw-now-label">지금</div>' : ''}
+                <div class="age">${p.age}세~</div>
+                <div class="gz"><span class="${EL_CLASS(p.stem.el)}" style="background:none">${p.stem.hanja}</span><br><span class="${EL_CLASS(p.branch.el)}" style="background:none">${p.branch.hanja}</span></div>
+                <div class="god">${god.name}</div>
+            </div>`;
+        }).join('');
+        if (cur) {
+            const god = SajuData.sipsin[Saju.tenGod(me, cur.stem.i)];
+            $('dwNow').textContent = `지금은 ${cur.age}세부터 이어지는 ${cur.stem.hanja}${cur.branch.hanja} 대운, ${god.name}(${god.hanja})의 10년입니다. ${god.dw}이며, 삶의 중심 주제는 ${god.kw}입니다.`;
+        } else {
+            $('dwNow').textContent = `첫 대운은 ${dw.startAge}세에 시작됩니다. 그전까지는 타고난 원국의 기운이 그대로 흐릅니다.`;
+        }
+        const now = state.today.tp;
+        const se = periodText(now.year, '년');
+        const wo = periodText(now.month, '월');
+        $('seunTitle').textContent = '올해 · ' + se.title;
+        $('seunText').textContent = se.text;
+        $('wolunTitle').textContent = '이달 · ' + wo.title;
+        $('wolunText').textContent = wo.text;
     }
 
     function pillarCell(g, isMe) {
@@ -148,6 +229,8 @@ const App = (() => {
         $('ilganCaution').textContent = p.ilgan.caution;
 
         renderOhaeng();
+        renderCross();
+        renderFlow();
 
         const e = SajuData.elements[p.weak];
         $('amuletBox').innerHTML = `<div class="big">${e.hanja}</div><div class="line">${e.amulet.name}</div><div class="desc">${e.amulet.desc}</div>`;
@@ -262,7 +345,8 @@ const App = (() => {
             dateLabel: dateLabel(new Date()),
             subtitle: `${u.mbti} · ${FortuneData.mbti.nick[u.mbti]}`,
             text: t.god.day[state.tone],
-            scores: t.scores
+            scores: t.scores,
+            quote: todayQuote()
         };
     }
 
@@ -284,6 +368,11 @@ const App = (() => {
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('on', p.dataset.panel === tab));
         document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (tab === 'saju') {
+            // 현재 대운이 보이도록 가로 스크롤을 맞춥니다.
+            const list = $('dwList'), nowEl = list.querySelector('.now');
+            if (nowEl) list.scrollLeft = nowEl.offsetLeft - list.offsetLeft - (list.clientWidth - nowEl.clientWidth) / 2;
+        }
     }
 
     // ---------- 화면 전환 ----------
@@ -293,8 +382,11 @@ const App = (() => {
         $('resultView').style.display = 'block';
         $('tabbar').style.display = 'flex';
         Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
+        Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
         state.compat = null;
         $('compatResult').style.display = 'none';
+        $('reframeText').style.display = 'none';
+        $('btnReframe').style.display = '';
         renderAll();
         if (state.invite) {
             fillPartner(state.invite);
@@ -398,6 +490,10 @@ const App = (() => {
         $('btnSaveCard').addEventListener('click', () => Keepsake.download(`명운첩_${Engine.ymd(new Date())}.png`));
         $('btnShare').addEventListener('click', onShare);
         $('btnReset').addEventListener('click', showInput);
+        $('btnReframe').addEventListener('click', () => {
+            $('reframeText').style.display = 'block';
+            $('btnReframe').style.display = 'none';
+        });
 
         $('compatForm').addEventListener('submit', e => {
             e.preventDefault();
@@ -423,6 +519,7 @@ const App = (() => {
     function init() {
         Keepsake.init($('keepsakeCanvas'));
         Tarot.init();
+        Journal.init(ok => toast(ok ? '오늘의 기록을 저장했습니다.' : '이 환경에서는 기록을 저장할 수 없습니다.'));
         $('pMbti').innerHTML = $('mbti').innerHTML;
 
         const inv = Compat.readInvite(location.search);

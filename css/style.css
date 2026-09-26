@@ -361,10 +361,11 @@ input[type="time"]:disabled { opacity: 0.4; }
 .cal .d.today { border-color: var(--gold); }
 .cal .d.has { cursor: pointer; }
 .cal .d.sel { background: rgba(212, 175, 55, 0.15); }
+.cal .d.has .dn { position: absolute; top: 3px; left: 5px; font-size: 0.6rem; color: var(--muted); }
 .cal .stamp {
-    position: absolute; inset: 14%; border: 2px solid var(--seal); color: var(--seal);
+    position: absolute; inset: 18% 14% 10%; border: 2px solid var(--seal); color: var(--seal);
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-family: var(--serif); font-weight: 700; font-size: 0.8rem; transform: rotate(-12deg);
+    font-family: var(--serif); font-weight: 700; font-size: 1rem; transform: rotate(-12deg);
     opacity: 0.85; background: rgba(179, 38, 30, 0.08);
 }
 .streak { display: flex; justify-content: space-around; text-align: center; margin-bottom: 14px; }
