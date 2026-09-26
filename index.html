@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>명운 (命運) - MZ세대를 위한 서버리스 사주·타로</title>
+    <!-- 웹 폰트 (Pretendard) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f5f5f5;
+            --primary-color: #d4af37; /* Gold point */
+            --border-color: #333;
+            --love-color: #ff79a1;
+            --money-color: #fbd341;
+            --biz-color: #4facfe;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px; 
+        }
+
+        h2 { text-align: center; color: var(--primary-color); margin-bottom: 5px; }
+        .subtitle { text-align: center; font-size: 0.9em; color: #aaa; margin-bottom: 30px; }
+
+        input, select, button {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #2a2a2a;
+            color: white;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .flex-row { display: flex; gap: 10px; }
+
+        button {
+            background-color: var(--primary-color);
+            color: #000;
+            font-weight: 800;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: #b5952f; }
+
+        .checkbox-container {
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .checkbox-container label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 결과 섹션 */
+        .result-section {
+            margin-top: 30px;
+            padding: 25px 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: none; 
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        #todayFortuneText {
+            line-height: 1.6;
+            font-size: 1rem;
+            word-break: keep-all;
+            margin-bottom: 25px;
+        }
+
+        /* 테마별 사주/팔자 (연애, 금전, 사업) */
+        .theme-fortune-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .theme-box {
+            background: #252525;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .theme-box.love { border-left-color: var(--love-color); }
+        .theme-box.money { border-left-color: var(--money-color); }
+        .theme-box.biz { border-left-color: var(--biz-color); }
+
+        .theme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .theme-header.love { color: var(--love-color); }
+        .theme-header.money { color: var(--money-color); }
+        .theme-header.biz { color: var(--biz-color); }
+
+        .score-badge {
+            background: #333;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .theme-text {
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #ddd;
+            word-break: keep-all;
+        }
+
+        /* MBTI 뱃지 및 조언 */
+        .mbti-section {
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .mbti-badge {
+            background: var(--primary-color);
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        /* 타로 카드 */
+        .tarot-title { margin-top: 10px; margin-bottom: 15px; text-align: center; font-size: 1.1rem; color: #fff;}
+        .tarot-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .card-wrapper { width: 31%; aspect-ratio: 1 / 1.7; perspective: 1000px; cursor: pointer; }
+        .card-inner { width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
+        .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); text-align: center; padding: 8px; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card-front { background: repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, #252525 10px, #252525 20px); color: var(--primary-color); font-weight: bold; font-size: 1.1rem; }
+        .card-back { background: #111; transform: rotateY(180deg); flex-direction: column; border-color: var(--primary-color); }
+
+        /* 공유하기 버튼 */
+        .share-area { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; }
+        .btn-share { background-color: #FEE500; color: #000; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-share:hover { background-color: #e5cf00; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>명운 (命運)</h2>
+    <p class="subtitle">이름, 생년월일, 성별, MBTI로 보는 나의 운명</p>
+
+    <!-- 입력 폼 -->
+    <form id="fortuneForm">
+        <input type="text" id="userName" placeholder="이름 (예: 홍길동)" required autocomplete="off">
+        <input type="number" id="birthDate" placeholder="생년월일 8자리 (예: 19980101)" required pattern="\d{8}">
+        
+        <div class="flex-row">
+            <select id="gender" required style="flex: 1;">
+                <option value="" disabled selected>성별</option>
+                <option value="M">남성</option>
+                <option value="F">여성</option>
+            </select>
+            
+            <select id="mbti" required style="flex: 1;">
+                <option value="" disabled selected>MBTI</option>
+                <optgroup label="분석가형">
+                    <option value="INTJ">INTJ</option><option value="INTP">INTP</option><option value="ENTJ">ENTJ</option><option value="ENTP">ENTP</option>
+                </optgroup>
+                <optgroup label="외교관형">
+                    <option value="INFJ">INFJ</option><option value="INFP">INFP</option><option value="ENFJ">ENFJ</option><option value="ENFP">ENFP</option>
+                </optgroup>
+                <optgroup label="관리자형">
+                    <option value="ISTJ">ISTJ</option><option value="ISFJ">ISFJ</option><option value="ESTJ">ESTJ</option><option value="ESFJ">ESFJ</option>
+                </optgroup>
+                <optgroup label="탐험가형">
+                    <option value="ISTP">ISTP</option><option value="ISFP">ISFP</option><option value="ESTP">ESTP</option><option value="ESFP">ESFP</option>
+                </optgroup>
+            </select>
+        </div>
+        
+        <div class="checkbox-container">
+            <label>
+                <input type="checkbox" id="rememberMe"> 
+                내 정보 기억하기 (기기에만 안전하게 저장)
+            </label>
+        </div>
+
+        <button type="submit">사주, 타로, 운세 종합 보기</button>
+    </form>
+
+    <!-- 결과 렌더링 영역 -->
+    <div id="resultSection" class="result-section">
+        
+        <h3 class="section-title">✨ 오늘의 종합 사주 총평</h3>
+        <p id="todayFortuneText"></p>
+        
+        <h3 class="section-title">📊 테마별 상세 운세</h3>
+        <div class="theme-fortune-container">
+            <!-- 연애운 -->
+            <div class="theme-box love">
+                <div class="theme-header love">💕 연애 / 애정운 <span class="score-badge" id="scoreLove">0점</span></div>
+                <div class="theme-text" id="textLove"></div>
+            </div>
+            <!-- 금전운 -->
+            <div class="theme-box money">
+                <div class="theme-header money">💰 금전 / 재물운 <span class="score-badge" id="scoreMoney">0점</span></div>
+                <div class="theme-text" id="textMoney"></div>
+            </div>
+            <!-- 사업운 -->
+            <div class="theme-box biz">
+                <div class="theme-header biz">💼 사업 / 직장운 <span class="score-badge" id="scoreBiz">0점</span></div>
+                <div class="theme-text" id="textBiz"></div>
+            </div>
+        </div>
+
+        <!-- MBTI 맞춤 조언 -->
+        <h3 class="section-title">💡 성향 맞춤형 조언</h3>
+        <div class="mbti-section">
+            <span id="mbtiBadge" class="mbti-badge"></span>
+            <span id="mbtiAdviceText" style="font-size: 0.95em; color: #fff;"></span>
+        </div>
+        
+        <!-- 타로 카드 -->
+        <h3 class="section-title">🔮 오늘의 3카드 타로 리딩</h3>
+        <p style="text-align: center; font-size: 0.8em; color: #aaa; margin-top: -5px; margin-bottom: 15px;">(카드를 클릭하여 뒤집어주세요)</p>
+        <div class="tarot-container" id="tarotContainer">
+            <!-- JS로 주입됨 -->
+        </div>
+
+        <!-- 공유하기 -->
+        <div class="share-area">
+            <p style="font-size: 0.85em; color: #aaa; margin-bottom: 12px;">이 결과를 친구들과 공유해보세요!</p>
+            <button id="shareButton" type="button" class="btn-share">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                나의 사주·운세 결과 공유하기
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * [Data Section] 운세, 사주 테마, MBTI, 타로 데이터셋
+     */
+    const fortuneData = {
+        daily: [
+            "오늘은 기운이 맑고 막힘이 없는 하루입니다. 머뭇거리던 일이 있다면 오늘 과감히 추진해보세요.",
+            "주변 사람들과의 소통에서 큰 에너지를 얻는 날입니다. 먼저 인사를 건네고 안부를 물어보세요.",
+            "마음이 다소 조급해질 수 있습니다. 큰 결정보다는 하던 일을 차분히 마무리하는 데 집중하세요.",
+            "당신의 숨겨진 재능이나 노력이 누군가의 눈에 띄어 인정받게 되는 기분 좋은 날입니다.",
+            "예기치 못한 지출이나 일정 변경이 생길 수 있으니, 스케줄을 너무 빡빡하게 잡지 마세요.",
+            "사소한 오해가 생길 수 있는 날입니다. 말을 전할 때는 평소보다 조금 더 부드럽고 명확하게 하세요.",
+            "컨디션이 최고조에 달합니다. 어려운 과제나 골치 아팠던 문제를 해결할 수 있는 귀중한 시간입니다."
+        ],
+        love: [
+            "새로운 만남의 기운이 강합니다. 외출이나 모임에서 당신의 매력이 유독 돋보이는 날입니다.",
+            "기존의 인연과 더욱 깊은 유대감을 느끼게 됩니다. 진심 어린 대화가 관계를 발전시킵니다.",
+            "상대방의 작은 단점보다는 장점을 보려 노력하세요. 이해와 배려가 애정운을 높여줍니다.",
+            "지나친 기대는 실망을 부릅니다. 오늘은 연애보다 나 자신을 가꾸고 사랑하는 데 집중해보세요.",
+            "우연한 연락이 설렘을 가져다줄 수 있습니다. 반가운 마음으로 답장을 보내보세요."
+        ],
+        money: [
+            "횡재수가 들어오는 날입니다. 생각지도 못했던 곳에서 작은 이익이나 선물을 얻을 수 있습니다.",
+            "노력한 만큼 정직하게 보상이 따르는 하루입니다. 투기보다는 본업에 충실하는 것이 이롭습니다.",
+            "지출 관리에 신경 써야 할 때입니다. 충동적인 소비의 유혹이 강하니 장바구니를 다시 점검하세요.",
+            "가까운 지인과의 금전 거래는 피하는 것이 좋습니다. 금전보다는 관계를 먼저 생각하세요.",
+            "재물운이 서서히 상승세를 탑니다. 장기적인 관점에서 저축이나 투자 계획을 세우기 좋은 날입니다."
+        ],
+        business: [
+            "당신의 아이디어가 직장이나 사업장 내에서 큰 호응을 얻을 수 있습니다. 자신 있게 의견을 내세요.",
+            "협업과 팀워크가 빛을 발하는 날입니다. 동료를 돕는 것이 결국 나의 성과로 돌아옵니다.",
+            "업무의 우선순위를 명확히 해야 실수를 줄일 수 있습니다. 아침에 오늘 할 일을 미리 정리해보세요.",
+            "새로운 프로젝트나 거래처를 개척하기에 유리한 흐름입니다. 주저하지 말고 부딪혀보세요.",
+            "상사나 거래처와의 갈등이 생길 수 있으니, 자존심을 내세우기보다 유연하게 대처하는 지혜가 필요합니다."
+        ],
+        mbtiAdvice: {
+            "INTJ": ["목표 달성도 좋지만, 과정 속의 작은 성취들도 축하할 줄 아는 여유를 가지세요."],
+            "INTP": ["완벽한 이해를 추구하느라 실행을 미루지 마세요. 일단 부딪혀보는 것이 정답일 수 있습니다."],
+            "ENTJ": ["당신의 확신에 찬 리더십이 위기를 돌파하는 원동력이 됩니다."],
+            "ENTP": ["창의적인 생각이 넘쳐나는 날입니다. 남들이 안 된다고 하는 일에 도전해보세요."],
+            "INFJ": ["남을 돕기 전에 나 자신의 에너지가 고갈되지 않았는지 먼저 점검하는 하루가 되세요."],
+            "INFP": ["당신만의 고유한 감수성이 예술적 영감이나 문제 해결의 실마리가 되어줍니다."],
+            "ENFJ": ["주변 사람들의 고민을 들어주는 것만으로도 당신은 오늘 큰 덕을 쌓게 됩니다."],
+            "ENFP": ["특유의 긍정 에너지가 주변을 밝힙니다. 생각나는 사람이 있다면 먼저 연락해보세요."],
+            "ISTJ": ["철저한 계획과 꼼꼼한 마무리가 당신의 평판을 한 단계 끌어올리는 날입니다."],
+            "ISFJ": ["조용히 베푼 배려가 큰 메아리가 되어 돌아옵니다. 누군가 당신을 깊이 신뢰하게 됩니다."],
+            "ESTJ": ["원칙을 지키는 것도 중요하지만, 상황에 맞게 타협하는 유연성이 효율을 높입니다."],
+            "ESFJ": ["관계 속에서 에너지를 얻는 당신, 오늘은 소중한 사람들과 맛있는 식사를 함께하세요."],
+            "ISTP": ["복잡한 생각은 접어두고 몸을 움직여보세요. 땀을 흘리면 잡념이 사라집니다."],
+            "ISFP": ["아름다운 것을 보고 듣고 느끼며 나만의 소확행을 만끽하기 완벽한 하루입니다."],
+            "ESTP": ["특유의 임기응변 능력이 가장 빛나는 날입니다. 예상치 못한 상황을 즐기세요."],
+            "ESFP": ["당신이 있는 곳이 곧 무대입니다. 사람들에게 웃음을 주며 긍정적인 하루를 보내세요."]
+        },
+        tarot: [
+            { id: 0, name: "0. The Fool (바보)", keyword: "자유, 새로운 시작", meaning: "어디로 튈지 모르는 무한한 가능성의 시기입니다. 계산하기보다는 마음이 끌리는 대로 과감하게 발걸음을 내딛어보세요." },
+            { id: 1, name: "I. The Magician (마법사)", keyword: "창조력, 준비됨", meaning: "당신의 책상 위에는 이미 필요한 모든 도구가 올려져 있습니다. 자신감을 가지고 당신만의 마법을 부려보세요." },
+            { id: 2, name: "II. The High Priestess (여사제)", keyword: "직관, 기다림", meaning: "겉으로 드러나는 상황보다 이면의 숨겨진 진실을 꿰뚫어 보아야 합니다. 섣부른 행동보다는 관망이 필요합니다." },
+            { id: 3, name: "III. The Empress (여황제)", keyword: "풍요, 모성", meaning: "당신의 노력과 정성이 아름다운 결실을 맺는 시기입니다. 물질적, 정신적인 풍요로움과 여유를 즐기세요." },
+            { id: 4, name: "IV. The Emperor (황제)", keyword: "책임감, 안정성", meaning: "강력한 의지와 리더십이 요구되는 시기입니다. 감정에 휩쓸리지 말고 이성적이고 체계적인 구조를 확립하세요." },
+            { id: 5, name: "V. The Hierophant (교황)", keyword: "조언, 전통", meaning: "독단적인 판단보다는 경험이 풍부한 멘토나 전문가의 조언을 구하는 것이 현명한 선택으로 이어집니다." },
+            { id: 6, name: "VI. The Lovers (연인)", keyword: "관계, 선택", meaning: "강력한 이끌림이나 중요한 선택의 기로에 놓일 수 있습니다. 머리보다는 당신의 가슴이 진정으로 원하는 것을 선택하세요." }
+        ]
+    };
+
+    /**
+     * [Engine Section] 결정론적 난수 생성 (새로고침해도 같은 결과)
+     */
+    function generateSeedFromString(str) {
+        let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+        for (let i = 0, k; i < str.length; i++) {
+            k = str.charCodeAt(i);
+            h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+            h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+            h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+            h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+        }
+        h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+        h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+        h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+        h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+        return (h1 ^ h2 ^ h3 ^ h4) >>> 0;
+    }
+
+    function createPRNG(seed) {
+        return function() {
+          var t = seed += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    }
+
+    function shuffleArray(array, prng) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(prng() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    /**
+     * [Storage Section] 로컬 스토리지
+     */
+    const STORAGE_KEY = 'myeongun_user_data_v2';
+
+    function loadUserData() {
+        try {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const p = JSON.parse(savedData);
+                document.getElementById('userName').value = p.name || '';
+                document.getElementById('birthDate').value = p.birth || '';
+                document.getElementById('gender').value = p.gender || '';
+                document.getElementById('mbti').value = p.mbti || '';
+                document.getElementById('rememberMe').checked = true;
+            }
+        } catch (e) { localStorage.removeItem(STORAGE_KEY); }
+    }
+
+    function saveUserData(name, birth, gender, mbti) {
+        if (document.getElementById('rememberMe').checked) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, birth, gender, mbti }));
+        } else {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadUserData);
+
+    // 글로벌 스코어 변수 (공유 기능에서 사용하기 위함)
+    let globalScores = { love: 0, money: 0, biz: 0 };
+
+    /**
+     * [Logic Section] 운세 산출 및 렌더링
+     */
+    document.getElementById('fortuneForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('userName').value;
+        const birth = document.getElementById('birthDate').value;
+        const gender = document.getElementById('gender').value;
+        const mbti = document.getElementById('mbti').value;
+        
+        saveUserData(name, birth, gender, mbti);
+        
+        const today = new Date();
+        const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+        const uniqueString = `${name}-${birth}-${gender}-${mbti}-${dateStr}`;
+        
+        const seed = generateSeedFromString(uniqueString);
+        const prng = createPRNG(seed);
+        
+        // 1. 오늘의 총평
+        const fortuneIndex = Math.floor(prng() * fortuneData.daily.length);
+        document.getElementById('todayFortuneText').innerText = fortuneData.daily[fortuneIndex];
+
+        // 2. 테마별 사주/운세 산출 및 렌더링
+        // 점수는 55점 ~ 100점 사이로 나오게 하여 너무 기분 나쁘지 않게 설정 (MZ 감성)
+        globalScores.love = Math.floor(prng() * 46) + 55; 
+        globalScores.money = Math.floor(prng() * 46) + 55;
+        globalScores.biz = Math.floor(prng() * 46) + 55;
+
+        document.getElementById('scoreLove').innerText = globalScores.love + '점';
+        document.getElementById('scoreMoney').innerText = globalScores.money + '점';
+        document.getElementById('scoreBiz').innerText = globalScores.biz + '점';
+
+        const loveIdx = Math.floor(prng() * fortuneData.love.length);
+        const moneyIdx = Math.floor(prng() * fortuneData.money.length);
+        const bizIdx = Math.floor(prng() * fortuneData.business.length);
+
+        document.getElementById('textLove').innerText = fortuneData.love[loveIdx];
+        document.getElementById('textMoney').innerText = fortuneData.money[moneyIdx];
+        document.getElementById('textBiz').innerText = fortuneData.business[bizIdx];
+        
+        // 3. MBTI 조언
+        const mbtiArray = fortuneData.mbtiAdvice[mbti] || ["당신의 빛나는 하루를 응원합니다!"];
+        const mbtiIndex = Math.floor(prng() * mbtiArray.length);
+        
+        document.getElementById('mbtiBadge').innerText = mbti;
+        document.getElementById('mbtiAdviceText').innerText = mbtiArray[mbtiIndex];
+        
+        // 4. 타로 카드
+        const shuffledDeck = shuffleArray(fortuneData.tarot, prng);
+        renderTarotCards(shuffledDeck.slice(0, 3));
+        
+        // 결과창 표시 및 스크롤
+        const resultSection = document.getElementById('resultSection');
+        resultSection.style.display = 'block';
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    function renderTarotCards(cards) {
+        const container = document.getElementById('tarotContainer');
+        container.innerHTML = ''; 
+        
+        cards.forEach((card, index) => {
+            const labels = ["과거", "현재", "미래"];
+            const cardHTML = `
+                <div class="card-wrapper" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <span>${labels[index]}</span>
+                        </div>
+                        <div class="card-back">
+                            <div style="font-size:0.7em; font-weight:bold; color:var(--primary-color); margin-bottom:5px;">${card.name}</div>
+                            <div style="font-size:0.6em; color:#fff; margin-bottom:6px;">[${card.keyword}]</div>
+                            <div style="font-size:0.55em; color:#bbb; line-height:1.4; word-break: keep-all; padding:0 3px;">${card.meaning}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += cardHTML;
+        });
+    }
+
+    /**
+     * [Share Section] Web Share API 
+     */
+    document.getElementById('shareButton').addEventListener('click', async () => {
+        const name = document.getElementById('userName').value;
+        const mbti = document.getElementById('mbti').value;
+        const currentUrl = window.location.href; 
+        
+        const shareTitle = `[명운] ${mbti} ${name}님의 오늘 사주/운세`;
+        const shareText = 
+`📜 ${name}(${mbti})님의 오늘 사주·운세 📜
+
+💕 연애운: ${globalScores.love}점
+💰 금전운: ${globalScores.money}점
+💼 사업운: ${globalScores.biz}점
+
+내 운세 점수와 타로 카드도 무료로 확인해보세요!
+👉 `;
+
+        if (navigator.share) {
+            try { 
+                await navigator.share({ title: shareTitle, text: shareText, url: currentUrl }); 
+            } catch (error) { 
+                if (error.name !== 'AbortError') fallbackToClipboard(shareText + currentUrl); 
+            }
+        } else {
+            fallbackToClipboard(shareText + currentUrl);
+        }
+    });
+
+    async function fallbackToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            alert('사주/운세 요약 결과가 클립보드에 복사되었습니다!\n원하는 곳에 붙여넣기(Ctrl+V) 해주세요.');
+        } catch (err) {
+            alert('공유 기능을 지원하지 않는 환경입니다.');
+        }
+    }
+</script>
+</body>
+</html>
