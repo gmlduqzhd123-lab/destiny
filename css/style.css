@@ -297,11 +297,11 @@ input[type="time"]:disabled { opacity: 0.4; }
 .spread-select button.on { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.08); }
 
 .deck-fan {
-    position: relative; height: 150px; margin: 10px 0 6px;
+    position: relative; height: 176px; margin: 10px 0 0; overflow: hidden;
     touch-action: manipulation;
 }
 .deck-card {
-    position: absolute; bottom: 0; left: 50%;
+    position: absolute; bottom: 76px; left: 50%;
     width: 52px; height: 86px; margin-left: -26px;
     border-radius: 6px; cursor: pointer;
     background:

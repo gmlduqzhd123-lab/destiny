@@ -24,6 +24,7 @@
 
     <!-- 입력 화면 -->
     <section id="inputView">
+        <div class="invite-banner" id="inviteBanner" style="display:none;"></div>
         <form id="fortuneForm" novalidate>
             <div class="field">
                 <input type="text" id="userName" placeholder="이름 (예: 홍길동)" autocomplete="off" maxlength="20">
@@ -176,12 +177,57 @@
             </div>
         </div>
 
+        <!-- ③ 궁합 -->
+        <div class="tab-panel" data-panel="compat">
+            <div class="card" id="compatFormCard">
+                <h3 class="card-title">궁합 보기 <span class="sub">상대의 정보를 입력해 주세요</span></h3>
+                <form id="compatForm" novalidate>
+                    <div class="field"><input type="text" id="pName" placeholder="상대 이름" autocomplete="off" maxlength="20"></div>
+                    <div class="field"><input type="text" id="pBirth" placeholder="상대 생년월일 8자리 (양력)" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+                    <div class="flex-row field">
+                        <select id="pGender">
+                            <option value="" disabled selected>성별</option>
+                            <option value="M">남성</option>
+                            <option value="F">여성</option>
+                        </select>
+                        <select id="pMbti"></select>
+                    </div>
+                    <p class="form-error" id="compatError"></p>
+                    <button type="submit" class="btn btn-gold">궁합 보기</button>
+                </form>
+            </div>
+
+            <div class="card" id="compatResult" style="display:none;">
+                <h3 class="card-title">두 사람의 궁합</h3>
+                <div class="gh-pair" id="ghPair"></div>
+                <div class="gh-score">
+                    <div class="num" id="ghTotal"></div>
+                    <div class="grade" id="ghGrade"></div>
+                </div>
+                <p class="lead" id="ghSummary" style="font-size:0.95rem; margin-bottom:14px;"></p>
+                <div id="ghParts"></div>
+                <button type="button" class="btn btn-kakao" id="btnShareCompat" style="margin-top:6px;">궁합 결과 공유하기</button>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">궁합 초대 링크</h3>
+                <p class="small" style="margin-top:0;">링크를 받은 사람이 자기 정보만 입력하면 바로 두 사람의 궁합을 볼 수 있습니다.</p>
+                <button type="button" class="btn btn-ghost" id="btnInvite">내 궁합 링크 보내기</button>
+                <p class="small muted" style="margin:10px 0 0;">링크에는 내 이름, 생년월일, 성별, MBTI가 담깁니다. 믿을 수 있는 사람에게만 보내 주세요.</p>
+            </div>
+        </div>
+
         <!-- ④ 타로 -->
         <div class="tab-panel" data-panel="tarot">
             <div class="card">
-                <h3 class="card-title">오늘의 3카드 타로</h3>
-                <p class="small muted center" style="margin-top:0;">카드를 눌러 뒤집어 주세요</p>
+                <h3 class="card-title">타로 리딩</h3>
+                <div class="spread-select" id="spreadSelect"></div>
+                <div class="field"><input type="text" id="tarotQuestion" placeholder="마음속 질문을 적어 보세요 (선택)" maxlength="60" autocomplete="off"></div>
+                <div class="deck-guide" id="deckGuide"></div>
+                <div class="deck-fan" id="deckFan"></div>
                 <div class="tarot-slots" id="tarotSlots"></div>
+                <div class="tarot-reading" id="tarotReading"></div>
+                <div class="center" style="margin-top:12px;"><button type="button" class="btn btn-ghost btn-sm" id="btnTarotReset">카드 다시 섞기</button></div>
             </div>
         </div>
 
@@ -194,6 +240,7 @@
     <div class="tabbar-inner">
         <button type="button" data-tab="today"><span class="ic">今</span>오늘</button>
         <button type="button" data-tab="saju"><span class="ic">命</span>사주</button>
+        <button type="button" data-tab="compat"><span class="ic">緣</span>궁합</button>
         <button type="button" data-tab="tarot"><span class="ic">星</span>타로</button>
     </div>
 </nav>
@@ -206,6 +253,8 @@
 <script src="js/data/fortune-data.js"></script>
 <script src="js/fortune.js"></script>
 <script src="js/data/tarot-data.js"></script>
+<script src="js/tarot.js"></script>
+<script src="js/compat.js"></script>
 <script src="js/keepsake.js"></script>
 <script src="js/app.js"></script>
 </body>

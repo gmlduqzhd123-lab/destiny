@@ -6,7 +6,7 @@ const App = (() => {
     const STORE_USER = 'myeongun_user_v3';
     const STORE_TONE = 'myeongun_tone';
 
-    const state = { user: null, tone: 'gentle', profile: null, today: null, tab: 'today' };
+    const state = { user: null, tone: 'gentle', profile: null, today: null, tab: 'today', invite: null, compat: null };
 
     // ---------- 저장소 (접근이 막힌 환경에서도 앱이 멈추지 않도록) ----------
     const store = {
@@ -54,9 +54,7 @@ const App = (() => {
     // ---------- 오늘의 운세 산출 ----------
     function computeToday(user, date) {
         state.profile = Fortune.profile(user);
-        const t = Fortune.today(user, state.profile, date);
-        t.tarot = Engine.shuffle(TarotData, t.rnd).slice(0, 3);
-        return t;
+        return Fortune.today(user, state.profile, date);
     }
 
     // ---------- 렌더링 ----------
@@ -191,19 +189,65 @@ const App = (() => {
         $('ohaengText').textContent = lines.join(' ');
     }
 
-    function renderTarot() {
-        const labels = ['과거', '현재', '미래'];
-        $('tarotSlots').innerHTML = state.today.tarot.map((c, i) => `
-            <div class="card-wrapper" onclick="this.classList.toggle('flipped')">
-                <div class="card-inner">
-                    <div class="card-front">${labels[i]}</div>
-                    <div class="card-back">
-                        <div class="nm" style="color:var(--gold);">${c.name}</div>
-                        <div class="small muted" style="font-size:0.62rem; margin:4px 0;">[${c.keyword}]</div>
-                        <div style="font-size:0.6rem; line-height:1.45; color:#ddd;">${c.meaning}</div>
-                    </div>
-                </div>
+    // ---------- 궁합 ----------
+    function readPartner() {
+        const name = $('pName').value.trim();
+        const birth = $('pBirth').value.trim();
+        const gender = $('pGender').value;
+        const mbti = $('pMbti').value;
+        if (!name) return { error: '상대 이름을 입력해 주세요.' };
+        const b = parseBirth(birth);
+        if (b.error) return b;
+        if (!gender) return { error: '상대 성별을 선택해 주세요.' };
+        if (!mbti) return { error: '상대 MBTI를 선택해 주세요.' };
+        return { partner: { name, birth, time: '', gender, mbti } };
+    }
+
+    function fillPartner(p) {
+        $('pName').value = p.name;
+        $('pBirth').value = p.birth;
+        $('pGender').value = p.gender;
+        $('pMbti').value = p.mbti;
+    }
+
+    function runCompat(partner) {
+        state.compat = Compat.compute(state.user, partner);
+        renderCompat();
+        $('compatResult').style.display = 'block';
+    }
+
+    function renderCompat() {
+        const c = state.compat;
+        if (!c) return;
+        const person = x => {
+            const st = x.profile.saju.day.stem;
+            return `<div class="p"><div class="ilgan-hanja ${EL_CLASS(st.el)}">${st.hanja}</div><div class="nm">${escapeHtml(x.name)} · ${x.mbti}</div></div>`;
+        };
+        $('ghPair').innerHTML = person(c.a) + '<div class="amp">緣</div>' + person(c.b);
+        $('ghTotal').textContent = c.total;
+        $('ghGrade').textContent = c.grade.name;
+        $('ghSummary').textContent = c.grade[state.tone];
+        $('ghParts').innerHTML = c.parts.map(p => `
+            <div class="gh-item">
+                <div class="hd"><span>${p.title}</span><span style="color:var(--gold)">${p.score} / ${p.max}</span></div>
+                <div class="tx">${escapeHtml(p.text)}</div>
             </div>`).join('');
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    async function shareOrCopy(title, text, url) {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text, url });
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return;
+            }
+        }
+        copyText(`${text}\n${url}`, '링크가 복사되었습니다. 원하는 곳에 붙여 넣어 주세요.');
     }
 
     function keepsakeData() {
@@ -230,7 +274,7 @@ const App = (() => {
         renderHeader();
         renderToday();
         renderSaju();
-        renderTarot();
+        renderCompat();
         renderKeepsake();
     }
 
@@ -248,8 +292,20 @@ const App = (() => {
         $('inputView').style.display = 'none';
         $('resultView').style.display = 'block';
         $('tabbar').style.display = 'flex';
+        Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
+        state.compat = null;
+        $('compatResult').style.display = 'none';
         renderAll();
-        switchTab('today');
+        if (state.invite) {
+            fillPartner(state.invite);
+            runCompat(state.invite);
+            state.invite = null;
+            $('inviteBanner').style.display = 'none';
+            history.replaceState(null, '', appUrl());
+            switchTab('compat');
+        } else {
+            switchTab('today');
+        }
     }
 
     function showInput() {
@@ -342,10 +398,39 @@ const App = (() => {
         $('btnSaveCard').addEventListener('click', () => Keepsake.download(`명운첩_${Engine.ymd(new Date())}.png`));
         $('btnShare').addEventListener('click', onShare);
         $('btnReset').addEventListener('click', showInput);
+
+        $('compatForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const r = readPartner();
+            $('compatError').textContent = r.error || '';
+            if (r.error) return;
+            runCompat(r.partner);
+            $('compatResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        $('pBirth').addEventListener('input', e => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8);
+        });
+        $('btnInvite').addEventListener('click', () => {
+            const u = state.user;
+            shareOrCopy('명운 궁합 초대', `${u.name} 님이 명운에서 궁합을 보자고 초대했습니다. 내 정보만 입력하면 두 사람의 궁합이 바로 나옵니다.`, Compat.inviteUrl(u, appUrl()));
+        });
+        $('btnShareCompat').addEventListener('click', () => {
+            const c = state.compat;
+            shareOrCopy('명운 궁합', `💞 ${c.a.name} × ${c.b.name} 궁합 ${c.total}점 · ${c.grade.name}\n\n우리 궁합도 명운에서 확인해 보세요.`, appUrl());
+        });
     }
 
     function init() {
         Keepsake.init($('keepsakeCanvas'));
+        Tarot.init();
+        $('pMbti').innerHTML = $('mbti').innerHTML;
+
+        const inv = Compat.readInvite(location.search);
+        if (inv && !parseBirth(inv.birth).error) {
+            state.invite = inv;
+            $('inviteBanner').innerHTML = `<b>${escapeHtml(inv.name)}</b> 님이 궁합을 보자고 초대했습니다.<br>내 정보를 입력하면 두 사람의 궁합을 바로 볼 수 있습니다.`;
+            $('inviteBanner').style.display = 'block';
+        }
         const saved = store.get(STORE_USER);
         if (saved) {
             fillForm(saved);
