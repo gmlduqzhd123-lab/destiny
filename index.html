@@ -31,6 +31,14 @@
             <div class="field">
                 <input type="text" id="birthDate" placeholder="생년월일 8자리 (예: 19980101)" inputmode="numeric" maxlength="8" autocomplete="off">
             </div>
+            <div class="field">
+                <label class="cap" for="birthTime">태어난 시간 (선택 · 시주 계산에 쓰입니다)</label>
+                <div class="flex-row">
+                    <input type="time" id="birthTime">
+                    <label class="check" style="margin:0; flex:0 0 auto;"><input type="checkbox" id="timeUnknown"> 모름</label>
+                </div>
+            </div>
+            <p class="hint">양력 기준, 한국 표준시로 계산합니다. 23시 이후 출생은 다음 날 자시(子時)로 봅니다.</p>
             <div class="flex-row field">
                 <select id="gender">
                     <option value="" disabled selected>성별</option>
@@ -68,7 +76,13 @@
         <div class="tab-panel" data-panel="today">
             <div class="card">
                 <h3 class="card-title">오늘의 총평 <span class="sub" id="todayDate"></span></h3>
+                <div class="day-head">
+                    <div class="hanja" id="dayHanja"></div>
+                    <div class="name" id="dayName"></div>
+                    <div class="kw" id="dayKw"></div>
+                </div>
                 <p class="lead" id="todayText"></p>
+                <p class="small muted" id="todayRelation" style="margin:12px 0 0;"></p>
             </div>
 
             <div class="card">
@@ -98,6 +112,11 @@
                 <div class="mission"><b>오늘의 실천</b> · <span id="missionText"></span></div>
             </div>
 
+            <div class="card">
+                <h3 class="card-title">개운(開運) 요소 <span class="sub" id="gaewunSub"></span></h3>
+                <div class="gaewun" id="gaewunGrid"></div>
+            </div>
+
             <div class="card keepsake-wrap">
                 <h3 class="card-title">명운첩 만들기 <span class="sub">도장을 골라 카드에 찍어 보세요</span></h3>
                 <canvas id="keepsakeCanvas" aria-label="명운첩 카드 미리보기"></canvas>
@@ -119,6 +138,44 @@
             </div>
         </div>
 
+        <!-- ② 사주 -->
+        <div class="tab-panel" data-panel="saju">
+            <div class="card">
+                <h3 class="card-title">사주 원국(原局) <span class="sub" id="sajuSub"></span></h3>
+                <div class="pillars" id="pillarGrid"></div>
+                <p class="small muted" id="sajuNote" style="margin:10px 0 0;"></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">나를 상징하는 글자</h3>
+                <div class="ilgan">
+                    <div class="ilgan-hanja" id="ilganHanja"></div>
+                    <div>
+                        <div class="ilgan-title" id="ilganTitle"></div>
+                        <div class="ilgan-sub" id="ilganSub"></div>
+                    </div>
+                </div>
+                <p class="lead" id="ilganTrait" style="font-size:0.95rem;"></p>
+                <p class="small" style="margin:10px 0 0;"><b style="color:var(--gold);">강점</b> · <span id="ilganStrength"></span></p>
+                <p class="small" style="margin:4px 0 0;"><b style="color:#ff8b7b;">주의</b> · <span id="ilganCaution"></span></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">오행 밸런스</h3>
+                <div class="ohaeng">
+                    <svg id="ohaengSvg" viewBox="0 0 160 160" aria-label="오행 분포 오각형 그래프"></svg>
+                    <div class="ohaeng-bars" id="ohaengBars"></div>
+                </div>
+                <p class="small" id="ohaengText" style="margin:12px 0 0; line-height:1.7;"></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">나에게 맞는 부적</h3>
+                <div class="amulet" id="amuletBox"></div>
+                <p class="small muted center" id="amuletNote" style="margin:12px 0 0;"></p>
+            </div>
+        </div>
+
         <!-- ④ 타로 -->
         <div class="tab-panel" data-panel="tarot">
             <div class="card">
@@ -136,6 +193,7 @@
 <nav class="tabbar" id="tabbar">
     <div class="tabbar-inner">
         <button type="button" data-tab="today"><span class="ic">今</span>오늘</button>
+        <button type="button" data-tab="saju"><span class="ic">命</span>사주</button>
         <button type="button" data-tab="tarot"><span class="ic">星</span>타로</button>
     </div>
 </nav>
@@ -143,7 +201,10 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/engine.js"></script>
+<script src="js/saju.js"></script>
+<script src="js/data/saju-data.js"></script>
 <script src="js/data/fortune-data.js"></script>
+<script src="js/fortune.js"></script>
 <script src="js/data/tarot-data.js"></script>
 <script src="js/keepsake.js"></script>
 <script src="js/app.js"></script>

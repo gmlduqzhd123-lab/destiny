@@ -6,7 +6,7 @@ const App = (() => {
     const STORE_USER = 'myeongun_user_v3';
     const STORE_TONE = 'myeongun_tone';
 
-    const state = { user: null, tone: 'gentle', today: null, tab: 'today' };
+    const state = { user: null, tone: 'gentle', profile: null, today: null, tab: 'today' };
 
     // ---------- 저장소 (접근이 막힌 환경에서도 앱이 멈추지 않도록) ----------
     const store = {
@@ -32,12 +32,13 @@ const App = (() => {
         const birth = $('birthDate').value.trim();
         const gender = $('gender').value;
         const mbti = $('mbti').value;
+        const time = $('timeUnknown').checked ? '' : $('birthTime').value;
         if (!name) return { error: '이름을 입력해 주세요.' };
         const b = parseBirth(birth);
         if (b.error) return b;
         if (!gender) return { error: '성별을 선택해 주세요.' };
         if (!mbti) return { error: 'MBTI를 선택해 주세요.' };
-        return { user: { name, birth, gender, mbti } };
+        return { user: { name, birth, time, gender, mbti } };
     }
 
     function fillForm(u) {
@@ -45,25 +46,17 @@ const App = (() => {
         $('birthDate').value = u.birth || '';
         $('gender').value = u.gender || '';
         $('mbti').value = u.mbti || '';
+        $('birthTime').value = u.time || '';
+        $('timeUnknown').checked = !u.time;
+        $('birthTime').disabled = !u.time;
     }
 
     // ---------- 오늘의 운세 산출 ----------
     function computeToday(user, date) {
-        const rnd = Engine.prng(`${user.name}-${user.birth}-${user.gender}-${user.mbti}-${Engine.ymd(date)}`);
-        // 문장은 '번호'로 고르고, 어조(다정/직설)는 같은 번호의 다른 버전을 보여줍니다.
-        return {
-            dailyIdx: Math.floor(rnd() * FortuneData.daily.gentle.length),
-            scores: {
-                love: Math.floor(rnd() * 46) + 55,
-                money: Math.floor(rnd() * 46) + 55,
-                work: Math.floor(rnd() * 46) + 55
-            },
-            loveIdx: Math.floor(rnd() * FortuneData.love.gentle.length),
-            moneyIdx: Math.floor(rnd() * FortuneData.money.gentle.length),
-            workIdx: Math.floor(rnd() * FortuneData.work.gentle.length),
-            mission: Engine.pick(FortuneData.missions, rnd),
-            tarot: Engine.shuffle(TarotData, rnd).slice(0, 3)
-        };
+        state.profile = Fortune.profile(user);
+        const t = Fortune.today(user, state.profile, date);
+        t.tarot = Engine.shuffle(TarotData, t.rnd).slice(0, 3);
+        return t;
     }
 
     // ---------- 렌더링 ----------
@@ -76,7 +69,8 @@ const App = (() => {
     function renderHeader() {
         const u = state.user;
         $('whoName').textContent = `${u.name} 님`;
-        $('whoMeta').textContent = `${u.birth.slice(0, 4)}.${u.birth.slice(4, 6)}.${u.birth.slice(6)} · ${genderLabel(u.gender)} · ${u.mbti}`;
+        const y = state.profile.saju.year;
+        $('whoMeta').textContent = `${u.birth.slice(0, 4)}.${u.birth.slice(4, 6)}.${u.birth.slice(6)}${u.time ? ' ' + u.time : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
         document.querySelectorAll('#toneToggle button').forEach(b => b.classList.toggle('on', b.dataset.tone === state.tone));
     }
 
@@ -86,19 +80,115 @@ const App = (() => {
         $('bar' + cap).style.width = v + '%';
     }
 
+    const EL_CLASS = el => 'el-' + el;
+
     function renderToday() {
-        const t = state.today, tone = state.tone, u = state.user;
-        $('todayDate').textContent = dateLabel(new Date());
-        $('todayText').textContent = FortuneData.daily[tone][t.dailyIdx];
+        const t = state.today, tone = state.tone, u = state.user, g = t.god;
+        const tp = t.tp.day;
+        $('todayDate').textContent = `${dateLabel(new Date())} · ${tp.stem.hanja}${tp.branch.hanja}일`;
+        $('dayHanja').textContent = g.hanja;
+        $('dayName').textContent = `오늘은 ${g.name}(${g.hanja})의 날`;
+        $('dayKw').textContent = g.kw;
+        $('todayText').textContent = g.day[tone];
+
+        const notes = [];
+        if (t.rel) notes.push(`${t.rel.label} · ${t.rel[tone]}`);
+        if (t.balance === 'boost') notes.push(`오늘의 ${Saju.EL_HANJA[t.todayEl]} 기운이 원국에 부족한 기운을 채워 줍니다.`);
+        if (t.balance === 'excess') notes.push(`이미 강한 ${Saju.EL_HANJA[t.todayEl]} 기운이 더해지니 과유불급을 기억하세요.`);
+        $('todayRelation').textContent = notes.join(' ');
+        $('todayRelation').style.display = notes.length ? 'block' : 'none';
+
         setScore('love', t.scores.love);
         setScore('money', t.scores.money);
         setScore('work', t.scores.work);
-        $('textLove').textContent = FortuneData.love[tone][t.loveIdx];
-        $('textMoney').textContent = FortuneData.money[tone][t.moneyIdx];
-        $('textWork').textContent = FortuneData.work[tone][t.workIdx];
+        $('textLove').textContent = g.love[tone];
+        $('textMoney').textContent = g.money[tone];
+        $('textWork').textContent = g.work[tone];
         $('mbtiBadge').textContent = u.mbti;
         $('mbtiAdvice').textContent = FortuneData.mbti.advice[u.mbti][tone];
-        $('missionText').textContent = t.mission;
+        $('missionText').textContent = g.mission;
+
+        const e = SajuData.elements[state.profile.weak];
+        $('gaewunSub').textContent = `부족한 ${e.hanja} 기운 채우기`;
+        $('gaewunGrid').innerHTML = `
+            <div><b>행운의 색</b><span><i class="color-dot" style="background:${e.hex}"></i>${e.color}</span></div>
+            <div><b>행운의 방향</b><span>${e.direction}</span></div>
+            <div><b>행운의 숫자</b><span>${e.numbers}</span></div>
+            <div><b>행운의 물건</b><span>${e.item}</span></div>
+            <div style="grid-column: span 2;"><b>개운 음식</b><span>${e.food}</span></div>`;
+    }
+
+    function pillarCell(g, isMe) {
+        if (!g) return `<div class="pillar-cell empty">?<small>시간 모름</small></div>`;
+        return `<div class="pillar-cell ${EL_CLASS(g.el)}${isMe ? ' me' : ''}">${g.hanja}<small>${g.kor} · ${Saju.EL_HANJA[g.el]}</small></div>`;
+    }
+
+    function renderSaju() {
+        const p = state.profile, sj = p.saju, me = sj.day.stem;
+        const cols = [['시주', sj.hour], ['일주', sj.day], ['월주', sj.month], ['년주', sj.year]];
+        $('pillarGrid').innerHTML = cols.map(([label, pl], i) => {
+            const stemGod = pl ? (i === 1 ? '나(일간)' : SajuData.sipsin[Saju.tenGod(me, pl.stem.i)].name) : '';
+            const branchGod = pl ? SajuData.sipsin[Saju.tenGodOfBranch(me, pl.branch.i)].name : '';
+            return `<div>
+                <div class="pillar-cap">${label}</div>
+                <div class="pillar-god">${stemGod}</div>
+                ${pillarCell(pl && pl.stem, i === 1)}
+                ${pillarCell(pl && pl.branch, false)}
+                <div class="pillar-god">${branchGod}</div>
+            </div>`;
+        }).join('');
+        $('sajuSub').textContent = sj.hasTime ? '8글자' : '6글자 (시간 모름)';
+        $('sajuNote').textContent = sj.hasTime ? '' : '태어난 시간을 입력하면 시주까지 계산해 8글자를 모두 볼 수 있습니다.';
+        $('sajuNote').style.display = sj.hasTime ? 'none' : 'block';
+
+        $('ilganHanja').className = 'ilgan-hanja ' + EL_CLASS(me.el);
+        $('ilganHanja').textContent = me.hanja;
+        $('ilganTitle').textContent = `${me.hanja}${Saju.EL_HANJA[me.el]} · ${p.ilgan.title}`;
+        $('ilganSub').textContent = `${me.kor}${SajuData.elements[me.el].kor} · ${me.yang ? '양(陽)' : '음(陰)'}의 ${SajuData.elements[me.el].nature}`;
+        $('ilganTrait').textContent = p.ilgan.trait;
+        $('ilganStrength').textContent = p.ilgan.strength;
+        $('ilganCaution').textContent = p.ilgan.caution;
+
+        renderOhaeng();
+
+        const e = SajuData.elements[p.weak];
+        $('amuletBox').innerHTML = `<div class="big">${e.hanja}</div><div class="line">${e.amulet.name}</div><div class="desc">${e.amulet.desc}</div>`;
+        $('amuletNote').textContent = `원국에 부족한 ${e.hanja}(${e.kor}) 기운을 채워 주는 부적입니다.`;
+    }
+
+    function renderOhaeng() {
+        const c = state.profile.counts;
+        const order = Saju.EL; // 목 → 화 → 토 → 금 → 수 (상생 순서, 시계 방향)
+        const max = Math.max(3, ...order.map(el => c[el]));
+        const cx = 80, cy = 82, R = 62;
+        const pt = (i, r) => {
+            const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
+            return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+        };
+        const color = el => getComputedStyle(document.documentElement).getPropertyValue('--' + el).trim();
+        let svg = '';
+        [1, 0.66, 0.33].forEach(f => {
+            svg += `<polygon points="${order.map((_, i) => pt(i, R * f).join(',')).join(' ')}" fill="none" stroke="#3a332b" stroke-width="1"/>`;
+        });
+        svg += `<polygon points="${order.map((el, i) => pt(i, Math.max(4, R * c[el] / max)).join(',')).join(' ')}" fill="rgba(212,175,55,0.22)" stroke="#d4af37" stroke-width="1.5"/>`;
+        order.forEach((el, i) => {
+            const [x, y] = pt(i, R + 12);
+            svg += `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="${color(el)}" font-family="Gowun Batang, serif">${Saju.EL_HANJA[el]}</text>`;
+        });
+        $('ohaengSvg').innerHTML = svg;
+
+        const total = order.reduce((a, el) => a + c[el], 0);
+        $('ohaengBars').innerHTML = order.map(el => `
+            <div class="oh-row">
+                <span class="nm" style="color:${color(el)}">${Saju.EL_HANJA[el]}</span>
+                <span class="track"><i style="width:${(c[el] / total) * 100}%; background:${color(el)}"></i></span>
+                <span class="ct">${c[el]}</span>
+            </div>`).join('');
+
+        const p = state.profile;
+        const lines = [SajuData.balance.strong(p.strong)];
+        lines.push(c[p.weak] === 0 ? SajuData.balance.missing(p.weak) : SajuData.balance.weak(p.weak));
+        $('ohaengText').textContent = lines.join(' ');
     }
 
     function renderTarot() {
@@ -117,12 +207,17 @@ const App = (() => {
     }
 
     function keepsakeData() {
-        const u = state.user, t = state.today;
+        const u = state.user, t = state.today, sj = state.profile.saju;
         return {
+            pillars: [['時', sj.hour], ['日', sj.day], ['月', sj.month], ['年', sj.year]].map(([label, p], i) => ({
+                label, stem: p && p.stem, branch: p && p.branch, me: i === 1
+            })),
+            ilganLine: `${sj.day.stem.hanja}${Saju.EL_HANJA[sj.day.stem.el]} · ${state.profile.ilgan.title}`,
+            dayTitle: `오늘은 ${t.god.name}(${t.god.hanja})의 날`,
             name: u.name,
             dateLabel: dateLabel(new Date()),
             subtitle: `${u.mbti} · ${FortuneData.mbti.nick[u.mbti]}`,
-            text: FortuneData.daily[state.tone][t.dailyIdx],
+            text: t.god.day[state.tone],
             scores: t.scores
         };
     }
@@ -134,6 +229,7 @@ const App = (() => {
     function renderAll() {
         renderHeader();
         renderToday();
+        renderSaju();
         renderTarot();
         renderKeepsake();
     }
@@ -187,7 +283,8 @@ const App = (() => {
 
     function shareSummary() {
         const u = state.user, s = state.today.scores;
-        return `📜 ${u.name}(${u.mbti}) 님의 오늘 명운\n\n연애운 ${s.love}점 · 금전운 ${s.money}점 · 직장운 ${s.work}점\n\n나의 사주와 타로도 확인해 보세요.`;
+        const g = state.today.god, me = state.profile.saju.day.stem;
+        return `📜 ${u.name}(${u.mbti}) 님의 오늘 명운\n${me.hanja}${Saju.EL_HANJA[me.el]} · ${state.profile.ilgan.title}\n오늘은 ${g.name}(${g.hanja})의 날\n\n연애운 ${s.love}점 · 금전운 ${s.money}점 · 직장운 ${s.work}점\n\n나의 사주와 타로도 확인해 보세요.`;
     }
 
     async function onShare() {
@@ -215,6 +312,11 @@ const App = (() => {
             if ($('rememberMe').checked) store.set(STORE_USER, r.user);
             else store.remove(STORE_USER);
             showResult();
+        });
+
+        $('timeUnknown').addEventListener('change', e => {
+            $('birthTime').disabled = e.target.checked;
+            if (e.target.checked) $('birthTime').value = '';
         });
 
         $('birthDate').addEventListener('input', e => {
