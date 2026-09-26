@@ -2,655 +2,150 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MBTI와 함께하는 사주팔자</title>
-    
-    <!-- Fonts -->
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <link href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@1.530/neodgm/style.css" rel="stylesheet"> <!-- 영수증용 레트로 폰트 -->
-    
-    <!-- html2canvas (영수증 이미지 다운로드용) -->
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0d0b">
+    <meta name="description" content="이름, 생년월일, 성별, MBTI로 보는 오늘의 운세와 타로">
+    <title>명운 (命運) - 사주·궁합·타로</title>
 
-    <style>
-        :root {
-            --bg-color: #f4f4f9;
-            --primary: #8a2be2;
-            --secondary: #ff1493;
-            --receipt-bg: #fffefe;
-            --receipt-text: #222;
-        }
-
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(#d1d1e0 1px, transparent 1px);
-            background-size: 20px 20px;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-            color: #333;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.5);
-            margin-bottom: 40px;
-        }
-
-        h2.main-title {
-            text-align: center;
-            font-weight: 900;
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0 0 5px 0;
-        }
-        
-        p.subtitle {
-            text-align: center;
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-        }
-
-        /* Form Elements */
-        .input-group { margin-bottom: 15px; }
-        .flex-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        
-        input, select {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 2px solid #eee;
-            background: #fafafa;
-            font-size: 1rem;
-            font-family: 'Pretendard', sans-serif;
-            box-sizing: border-box;
-            transition: 0.2s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: #fff;
-        }
-
-        /* 2. 순한맛 vs 마라맛 토글 (Idea 2) */
-        .spice-toggle {
-            display: flex;
-            background: #eee;
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 20px;
-            position: relative;
-        }
-        
-        .spice-toggle label {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            z-index: 1;
-            transition: color 0.3s;
-            color: #888;
-        }
-
-        .spice-toggle input { display: none; }
-        .spice-slider {
-            position: absolute;
-            top: 4px; left: 4px;
-            width: calc(50% - 4px);
-            height: calc(100% - 8px);
-            background: #fff;
-            border-radius: 8px;
-            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        #spiceSpicy:checked ~ .spice-slider { transform: translateX(100%); background: #ff4757; }
-        #spiceMild:checked ~ label[for="spiceMild"] { color: var(--primary); }
-        #spiceSpicy:checked ~ label[for="spiceSpicy"] { color: #fff; }
-
-        .btn-submit {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
-            transition: transform 0.2s;
-        }
-        .btn-submit:active { transform: scale(0.98); }
-
-        /* Result Section & Receipt (Idea 1) */
-        #resultSection { display: none; width: 100%; max-width: 420px; }
-        
-        .receipt-wrapper {
-            background: var(--receipt-bg);
-            padding: 30px 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-            position: relative;
-            color: var(--receipt-text);
-            font-family: 'neoDunggeunmo', monospace; /* 레트로 영수증 폰트 */
-            margin-bottom: 20px;
-            /* 영수증 지그재그 테두리 효과 */
-            background-image: radial-gradient(circle at 10px 0, transparent 10px, var(--receipt-bg) 11px),
-                              radial-gradient(circle at 10px 100%, transparent 10px, var(--receipt-bg) 11px);
-            background-size: 20px 100%;
-            background-repeat: repeat-x;
-            background-position: 0 0, 0 100%;
-            border-left: 1px dashed #ddd;
-            border-right: 1px dashed #ddd;
-            overflow: hidden;
-        }
-
-        .receipt-header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 15px; margin-bottom: 15px; }
-        .receipt-title { font-size: 1.5rem; font-weight: bold; margin: 0 0 5px 0; }
-        .receipt-date { font-size: 0.8rem; color: #666; }
-        
-        /* 8. MBTI 유니버스 세계관 (Idea 8) */
-        .mbti-universe {
-            text-align: center;
-            background: #000;
-            color: #0f0;
-            padding: 5px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-
-        /* 6. RPG 스탯창 (Idea 6) */
-        .rpg-stats {
-            border: 1px solid #333;
-            padding: 10px;
-            margin-bottom: 20px;
-            background: #f9f9f9;
-        }
-        .stat-row { display: flex; align-items: center; margin-bottom: 5px; font-size: 0.9rem; }
-        .stat-label { width: 60px; font-weight: bold; }
-        .stat-bar-bg { flex: 1; background: #ddd; height: 12px; position: relative; border: 1px solid #999; }
-        .stat-bar-fill { height: 100%; background: #ff4757; }
-        .stat-bar-fill.mp { background: #3742fa; }
-
-        /* 메인 운세 영역 */
-        .fortune-main { font-size: 1.1rem; line-height: 1.6; margin-bottom: 15px; word-break: keep-all; }
-        
-        /* 3. 럭키비키 필터 버튼 (Idea 3) */
-        .btn-lucky {
-            background: #fff;
-            border: 2px solid #ff69b4;
-            color: #ff69b4;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-family: 'Pretendard', sans-serif;
-            margin-bottom: 20px;
-            transition: 0.2s;
-        }
-        .btn-lucky:hover { background: #ffe4e1; }
-
-        /* 기타 추천 리스트 (Idea 4, 5, 9) */
-        .receipt-list { list-style: none; padding: 0; margin: 0 0 20px 0; border-top: 1px dashed #ccc; padding-top: 15px; }
-        .receipt-list li { margin-bottom: 10px; font-size: 0.95rem; line-height: 1.4; }
-        .list-icon { display: inline-block; width: 20px; text-align: center; margin-right: 5px; }
-
-        /* 7. 디지털 부적 (Idea 7) */
-        .amulet-box {
-            text-align: center;
-            border: 2px solid #eccc68;
-            background: #fffbe2;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #d35400;
-        }
-
-        .barcode {
-            text-align: center;
-            font-size: 2.5rem;
-            letter-spacing: -2px;
-            margin-top: 20px;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        /* 10. 다꾸 스티커 팔레트 (Idea 10) */
-        .sticker-palette {
-            background: rgba(255,255,255,0.9);
-            padding: 10px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .sticker-btn {
-            cursor: pointer;
-            transition: transform 0.2s;
-            user-select: none;
-        }
-        .sticker-btn:hover { transform: scale(1.3); }
-        .sticker-btn.active { transform: scale(1.3); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
-
-        .stamped-sticker {
-            position: absolute;
-            font-size: 2rem;
-            transform: translate(-50%, -50%);
-            pointer-events: none; /* 스티커 위에 또 찍을 수 있도록 */
-            z-index: 10;
-        }
-
-        /* Action Buttons */
-        .action-btns { display: flex; gap: 10px; margin-bottom: 40px; }
-        .btn-action {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            font-family: 'Pretendard', sans-serif;
-            display: flex; justify-content: center; align-items: center; gap: 5px;
-        }
-        .btn-download { background: #333; color: #fff; }
-        .btn-share { background: #FEE500; color: #000; }
-        .btn-reset { width: 100%; background: #ddd; color: #555; margin-bottom: 40px; }
-
-    </style>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="container" id="inputContainer">
-    <h2 class="main-title">MBTI와 함께하는 사주팔자</h2>
-    <p class="subtitle">MZ감성 200% 운세 영수증 발급기 🧾✨</p>
+<div class="container">
+    <header class="brand">
+        <div class="brand-seal">命</div>
+        <h1>명운<small>命運</small></h1>
+        <p>이름, 생년월일, 성별, MBTI로 보는 나의 운명</p>
+    </header>
 
-    <form id="fortuneForm">
-        <!-- 순한맛 / 마라맛 토글 -->
-        <div class="spice-toggle">
-            <input type="radio" name="spice" id="spiceMild" value="mild" checked>
-            <label for="spiceMild">😇 힐링 순한맛</label>
-            <input type="radio" name="spice" id="spiceSpicy" value="spicy">
-            <label for="spiceSpicy">🌶️ 팩폭 마라맛</label>
-            <div class="spice-slider"></div>
-        </div>
-
-        <div class="input-group">
-            <input type="text" id="userName" placeholder="이름 (닉네임 가능)" required autocomplete="off">
-        </div>
-        <div class="input-group">
-            <input type="number" id="birthDate" placeholder="생년월일 8자리 (예: 20020505)" required pattern="\d{8}">
-        </div>
-        
-        <div class="flex-row">
-            <select id="gender" required style="flex: 1;">
-                <option value="" disabled selected>성별</option>
-                <option value="M">남성</option>
-                <option value="F">여성</option>
-            </select>
-            
-            <select id="mbti" required style="flex: 1;">
-                <option value="" disabled selected>MBTI</option>
-                <optgroup label="분석가형"><option value="INTJ">INTJ</option><option value="INTP">INTP</option><option value="ENTJ">ENTJ</option><option value="ENTP">ENTP</option></optgroup>
-                <optgroup label="외교관형"><option value="INFJ">INFJ</option><option value="INFP">INFP</option><option value="ENFJ">ENFJ</option><option value="ENFP">ENFP</option></optgroup>
-                <optgroup label="관리자형"><option value="ISTJ">ISTJ</option><option value="ISFJ">ISFJ</option><option value="ESTJ">ESTJ</option><option value="ESFJ">ESFJ</option></optgroup>
-                <optgroup label="탐험가형"><option value="ISTP">ISTP</option><option value="ISFP">ISFP</option><option value="ESTP">ESTP</option><option value="ESFP">ESFP</option></optgroup>
-            </select>
-        </div>
-
-        <button type="submit" class="btn-submit">내 운세 영수증 발급받기 🧾</button>
-    </form>
-</div>
-
-<!-- 결과 영역 -->
-<div id="resultSection">
-    
-    <div style="text-align: center; color: #555; font-size: 0.85rem; margin-bottom: 5px;">
-        👇 아래 영수증을 클릭해 스티커로 꾸며보세요!
-    </div>
-    
-    <!-- 다꾸 스티커 팔레트 -->
-    <div class="sticker-palette" id="stickerPalette">
-        <div class="sticker-btn" data-emoji="🍀">🍀</div>
-        <div class="sticker-btn" data-emoji="⭐">⭐</div>
-        <div class="sticker-btn" data-emoji="💖">💖</div>
-        <div class="sticker-btn" data-emoji="🔥">🔥</div>
-        <div class="sticker-btn" data-emoji="🎀">🎀</div>
-        <div class="sticker-btn" data-emoji="🐾">🐾</div>
-    </div>
-
-    <!-- 캡처/다운로드용 영수증 영역 -->
-    <div class="receipt-wrapper" id="receiptArea">
-        <div class="receipt-header">
-            <div class="receipt-title">FORTUNE RECEIPT</div>
-            <div class="receipt-date" id="receiptDate">2026.09.26 10:45:00 발행</div>
-        </div>
-
-        <div class="mbti-universe" id="mbtiUniverse"></div>
-
-        <div class="rpg-stats">
-            <div style="text-align:center; font-weight:bold; margin-bottom:8px; border-bottom:1px dotted #333; padding-bottom:5px;">[ 오늘의 캐릭터 상태 ]</div>
-            <div class="stat-row">
-                <span class="stat-label">HP(체력)</span>
-                <div class="stat-bar-bg"><div class="stat-bar-fill" id="statHp"></div></div>
-                <span style="width:30px; text-align:right; font-size:0.8rem;" id="hpTxt">80</span>
+    <!-- 입력 화면 -->
+    <section id="inputView">
+        <form id="fortuneForm" novalidate>
+            <div class="field">
+                <input type="text" id="userName" placeholder="이름 (예: 홍길동)" autocomplete="off" maxlength="20">
             </div>
-            <div class="stat-row">
-                <span class="stat-label">MP(멘탈)</span>
-                <div class="stat-bar-bg"><div class="stat-bar-fill mp" id="statMp"></div></div>
-                <span style="width:30px; text-align:right; font-size:0.8rem;" id="mpTxt">50</span>
+            <div class="field">
+                <input type="text" id="birthDate" placeholder="생년월일 8자리 (예: 19980101)" inputmode="numeric" maxlength="8" autocomplete="off">
+            </div>
+            <div class="flex-row field">
+                <select id="gender">
+                    <option value="" disabled selected>성별</option>
+                    <option value="M">남성</option>
+                    <option value="F">여성</option>
+                </select>
+                <select id="mbti">
+                    <option value="" disabled selected>MBTI</option>
+                    <optgroup label="분석가형"><option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option></optgroup>
+                    <optgroup label="외교관형"><option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option></optgroup>
+                    <optgroup label="관리자형"><option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option></optgroup>
+                    <optgroup label="탐험가형"><option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option></optgroup>
+                </select>
+            </div>
+            <label class="check"><input type="checkbox" id="rememberMe"> 내 정보 기억하기 (이 기기에만 저장)</label>
+            <p class="form-error" id="formError"></p>
+            <button type="submit" class="btn btn-gold">운명의 흐름 읽기</button>
+        </form>
+    </section>
+
+    <!-- 결과 화면 -->
+    <section id="resultView">
+        <div class="who">
+            <div>
+                <div class="who-name" id="whoName"></div>
+                <div class="who-meta" id="whoMeta"></div>
+            </div>
+            <div class="tone-toggle" id="toneToggle">
+                <button type="button" data-tone="gentle">다정한 풀이</button>
+                <button type="button" data-tone="direct">직설 풀이</button>
             </div>
         </div>
 
-        <div class="fortune-main" id="fortuneMain"></div>
-        
-        <div style="text-align: center;">
-            <button type="button" class="btn-lucky" id="btnLuckyVicky">✨ 원영적 사고 (럭키비키) 필터 켜기</button>
+        <!-- ① 오늘 -->
+        <div class="tab-panel" data-panel="today">
+            <div class="card">
+                <h3 class="card-title">오늘의 총평 <span class="sub" id="todayDate"></span></h3>
+                <p class="lead" id="todayText"></p>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">테마별 운세</h3>
+                <div class="theme-list">
+                    <div class="theme-box love">
+                        <div class="theme-head">연애 · 애정운 <span class="score" id="scoreLove"></span></div>
+                        <div class="bar"><i id="barLove"></i></div>
+                        <div class="theme-text" id="textLove"></div>
+                    </div>
+                    <div class="theme-box money">
+                        <div class="theme-head">금전 · 재물운 <span class="score" id="scoreMoney"></span></div>
+                        <div class="bar"><i id="barMoney"></i></div>
+                        <div class="theme-text" id="textMoney"></div>
+                    </div>
+                    <div class="theme-box work">
+                        <div class="theme-head">직장 · 사업운 <span class="score" id="scoreWork"></span></div>
+                        <div class="bar"><i id="barWork"></i></div>
+                        <div class="theme-text" id="textWork"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">성향 맞춤 조언</h3>
+                <div class="mbti-box"><span class="mbti-badge" id="mbtiBadge"></span><span id="mbtiAdvice"></span></div>
+                <div class="mission"><b>오늘의 실천</b> · <span id="missionText"></span></div>
+            </div>
+
+            <div class="card keepsake-wrap">
+                <h3 class="card-title">명운첩 만들기 <span class="sub">도장을 골라 카드에 찍어 보세요</span></h3>
+                <canvas id="keepsakeCanvas" aria-label="명운첩 카드 미리보기"></canvas>
+                <div class="seal-palette" id="sealPalette">
+                    <button type="button" class="seal-btn" data-seal="福">福</button>
+                    <button type="button" class="seal-btn" data-seal="吉">吉</button>
+                    <button type="button" class="seal-btn" data-seal="合">合</button>
+                    <button type="button" class="seal-btn" data-seal="壽">壽</button>
+                    <button type="button" class="seal-btn" data-seal="財">財</button>
+                    <button type="button" class="seal-btn" data-seal="愛">愛</button>
+                </div>
+                <div class="btn-row" style="margin-bottom:10px;">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnClearSeals">도장 지우기</button>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-gold" id="btnSaveCard">이미지 저장</button>
+                    <button type="button" class="btn btn-kakao" id="btnShare">공유하기</button>
+                </div>
+            </div>
         </div>
 
-        <ul class="receipt-list">
-            <li><span class="list-icon">🎧</span><strong>BGM 처방:</strong> <span id="resSong"></span></li>
-            <li><span class="list-icon">🍽️</span><strong>소울푸드:</strong> <span id="resFood"></span></li>
-            <li><span class="list-icon">🛍️</span><strong>행운템:</strong> <span id="resItem"></span></li>
-            <li><span class="list-icon">✅</span><strong>오늘 미션:</strong> <span id="resMission"></span></li>
-        </ul>
+        <!-- ④ 타로 -->
+        <div class="tab-panel" data-panel="tarot">
+            <div class="card">
+                <h3 class="card-title">오늘의 3카드 타로</h3>
+                <p class="small muted center" style="margin-top:0;">카드를 눌러 뒤집어 주세요</p>
+                <div class="tarot-slots" id="tarotSlots"></div>
+            </div>
+        </div>
 
-        <div class="amulet-box" id="resAmulet"></div>
-
-        <div class="barcode">|||| ||||| |||| || |||</div>
-        <div style="text-align:center; font-size:0.7rem; margin-top:5px; color:#999;">REFUND POLICY: NO REFUNDS</div>
-    </div>
-
-    <!-- 액션 버튼 -->
-    <div class="action-btns">
-        <button class="btn-action btn-download" id="btnDownload">💾 영수증 이미지 저장</button>
-        <button class="btn-action btn-share" id="btnShare">💬 결과 링크 공유</button>
-    </div>
-    
-    <button class="btn-action btn-reset" id="btnReset">🔄 처음으로 돌아가기</button>
-
+        <button type="button" class="btn btn-ghost" id="btnReset">다른 사람 운세 보기</button>
+        <p class="footer-note">명운은 재미로 보는 운세입니다. 중요한 결정은 스스로의 판단을 믿으세요.</p>
+    </section>
 </div>
 
-<script>
-    // ---------------------------------------------------
-    // 1. Data Dictionary (MZ 맞춤형 데이터)
-    // ---------------------------------------------------
-    const dataPool = {
-        mbtiTitles: {
-            "INTJ": "계획이 틀어지면 흑마법사가 되는 INTJ",
-            "INTP": "머릿속에 우주가 있는 팩폭러 INTP",
-            "ENTJ": "숨 쉬는 것도 효율적으로 하는 ENTJ",
-            "ENTP": "광기의 티키타카 마스터 ENTP",
-            "INFJ": "속으로는 이미 지구 3번 구한 INFJ",
-            "INFP": "망상 풀가동 중인 말랑콩떡 INFP",
-            "ENFJ": "오지랖으로 세상을 덥히는 ENFJ",
-            "ENFP": "호기심 넘치는 골든리트리버 ENFP",
-            "ISTJ": "엑셀로 인생 계획 짜는 원칙주의자 ISTJ",
-            "ISFJ": "겉바속촉 챙김의 달인 ISFJ",
-            "ESTJ": "잔소리에 애정이 듬뿍 담긴 ESTJ",
-            "ESFJ": "리액션 혜자 인싸 중의 인싸 ESFJ",
-            "ISTP": "만사가 귀찮지만 할 땐 하는 ISTP",
-            "ISFP": "누워있는 게 제일 좋은 성인군자 ISFP",
-            "ESTP": "내일은 없는 브레이크 고장 8t트럭 ESTP",
-            "ESFP": "텐션 폭발 인간 비타민 ESFP"
-        },
-        mildFortunes: [
-            "오늘은 평범한 일상 속에서 작고 귀여운 기쁨을 발견하는 날입니다. 따뜻한 차 한 잔의 여유를 가져보세요.",
-            "당신의 숨겨진 매력이 은은하게 빛을 발하는 날! 주변 사람들에게 다정한 말 한마디 건네보면 어떨까요?",
-            "조금 돌아가더라도 괜찮아요. 묵묵히 하던 일을 계속하면 저녁쯤엔 뿌듯한 미소를 지을 수 있을 거예요.",
-            "우연히 들은 노래나 문장이 큰 위로가 되는 하루입니다. 오늘은 내 마음의 소리에 귀 기울여보세요."
-        ],
-        spicyFortunes: [
-            "오늘 또 통장 잔고 생각 안 하고 긁을 뻔했지? 장바구니 비워라. 과거의 네가 울고 있다.",
-            "일 미루기의 달인 등극! 내일의 나에게 그만 좀 떠넘기고 오늘 당장 10분이라도 시작해라.",
-            "가만히 있으면 중간이라도 가는 날. 굳이 나서서 일 벌이지 말고 조용히 숨만 쉬다 퇴근(하교)하자.",
-            "팩폭 주의! 네가 지금 고민하는 그거, 사실 답 정해놓고 물어보는 거잖아? 마음 가는 대로 질러라."
-        ],
-        songs: ["DAY6 - 한 페이지가 될 수 있게", "아이유 - 밤편지", "에스파 - Supernova", "뉴진스 - Hype Boy", "QWER - 고민중독", "AKMU - 후라이의 꿈", "잔나비 - 주저하는 연인들을 위해"],
-        foods: ["마라탕 2단계에 꿔바로우", "요아정(요거트아이스크림의정석) 벌집꿀 추가", "아이스 아메리카노 수혈", "엽기떡볶이 착한맛", "탕후루 대신 제철 생과일", "따끈하고 바삭한 붕어빵"],
-        items: ["노이즈 캔슬링 무선 헤드폰", "가방에 달린 은하수 키링", "좋아하는 최애 포카(포토카드)", "보조배터리 (오늘 폰 배터리 위험)", "립밤 (건조함 주의)"],
-        missions: ["유튜브 숏폼 영상 30분만 덜 보기", "퇴근/하교길에 하늘 사진 1장 찍기", "물 3잔 이상 마시기", "의미없이 편의점 들어가서 돈 쓰지 않기", "자기 전 폰 끄고 5분 멍때리기"],
-        amulets: ["🛡️ 텅장 철벽 방어 부적 🛡️", "🏃‍♂️ 쾌속 칼퇴 기원 부적 🏃‍♂️", "🍀 벼락치기 기적 부적 🍀", "💖 쿠크다스 멘탈 보호 부적 💖", "✨ 럭키비키 긍정 부적 ✨"]
-    };
+<nav class="tabbar" id="tabbar">
+    <div class="tabbar-inner">
+        <button type="button" data-tab="today"><span class="ic">今</span>오늘</button>
+        <button type="button" data-tab="tarot"><span class="ic">星</span>타로</button>
+    </div>
+</nav>
 
-    // ---------------------------------------------------
-    // 2. Core Engine: PRNG (결정론적 난수 생성)
-    // ---------------------------------------------------
-    function generateSeedFromString(str) {
-        let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
-        for (let i = 0, k; i < str.length; i++) {
-            k = str.charCodeAt(i);
-            h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
-            h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
-        }
-        h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
-        h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213); h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
-        return (h1 ^ h2 ^ h3 ^ h4) >>> 0;
-    }
+<div class="toast" id="toast"></div>
 
-    function createPRNG(seed) {
-        return function() {
-          var t = seed += 0x6D2B79F5;
-          t = Math.imul(t ^ t >>> 15, t | 1);
-          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-          return ((t ^ t >>> 14) >>> 0) / 4294967296;
-        }
-    }
-
-    // 배열에서 랜덤 추출하는 헬퍼 함수
-    function pickRandom(arr, prng) {
-        return arr[Math.floor(prng() * arr.length)];
-    }
-
-    // ---------------------------------------------------
-    // 3. Form Submit & 렌더링 로직
-    // ---------------------------------------------------
-    let currentFortuneText = ""; // 럭키비키 변환을 위한 원본 저장용
-
-    document.getElementById('fortuneForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // 입력값 가져오기
-        const name = document.getElementById('userName').value;
-        const birth = document.getElementById('birthDate').value;
-        const gender = document.getElementById('gender').value;
-        const mbti = document.getElementById('mbti').value;
-        const spice = document.querySelector('input[name="spice"]:checked').value;
-        
-        // 시드 생성용 날짜 문자열
-        const today = new Date();
-        const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
-        
-        // 날짜/시간 세팅 (영수증용)
-        document.getElementById('receiptDate').innerText = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')} 발행`;
-        
-        // 시드 생성 (맵기 정도를 시드에 포함시켜서 모드를 바꾸면 결과도 바뀜)
-        const uniqueString = `${name}-${birth}-${gender}-${mbti}-${dateStr}-${spice}`;
-        const prng = createPRNG(generateSeedFromString(uniqueString));
-        
-        // 데이터 할당
-        document.getElementById('mbtiUniverse').innerText = `[ ${dataPool.mbtiTitles[mbti]} ]`;
-        
-        // RPG 스탯 (30 ~ 100 사이 난수)
-        const hp = Math.floor(prng() * 71) + 30;
-        const mp = Math.floor(prng() * 71) + 30;
-        document.getElementById('statHp').style.width = hp + '%';
-        document.getElementById('hpTxt').innerText = hp;
-        document.getElementById('statMp').style.width = mp + '%';
-        document.getElementById('mpTxt').innerText = mp;
-
-        // 메인 운세
-        const fortuneArr = spice === 'spicy' ? dataPool.spicyFortunes : dataPool.mildFortunes;
-        currentFortuneText = pickRandom(fortuneArr, prng);
-        document.getElementById('fortuneMain').innerHTML = currentFortuneText;
-        
-        // 럭키비키 버튼 초기화
-        const btnLucky = document.getElementById('btnLuckyVicky');
-        btnLucky.style.display = 'inline-flex';
-        btnLucky.innerText = '✨ 원영적 사고 (럭키비키) 필터 켜기';
-        btnLucky.disabled = false;
-
-        // 기타 요소
-        document.getElementById('resSong').innerText = pickRandom(dataPool.songs, prng);
-        document.getElementById('resFood').innerText = pickRandom(dataPool.foods, prng);
-        document.getElementById('resItem').innerText = pickRandom(dataPool.items, prng);
-        document.getElementById('resMission').innerText = pickRandom(dataPool.missions, prng);
-        document.getElementById('resAmulet').innerText = pickRandom(dataPool.amulets, prng);
-        
-        // 기존에 찍힌 스티커 초기화
-        const oldStickers = document.querySelectorAll('.stamped-sticker');
-        oldStickers.forEach(el => el.remove());
-
-        // UI 전환
-        document.getElementById('inputContainer').style.display = 'none';
-        document.getElementById('resultSection').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // ---------------------------------------------------
-    // 4. 원영적 사고 (럭키비키) 변환 로직 (Idea 3)
-    // ---------------------------------------------------
-    document.getElementById('btnLuckyVicky').addEventListener('click', function() {
-        const fortuneElem = document.getElementById('fortuneMain');
-        
-        // 간단한 텍스트 변환 꼼수 (어미 변환 및 접미사 추가)
-        let luckyText = currentFortuneText;
-        luckyText = luckyText.replace(/다\./g, '잖아!');
-        luckyText = luckyText.replace(/요\./g, '잖아!');
-        luckyText = luckyText.replace(/해라\./g, '해보면 어떨까?');
-        
-        fortuneElem.innerHTML = `<div style="background:#fff0f5; padding:15px; border-radius:12px; border:2px dashed #ffb6c1; color:#d24dff; font-weight:bold;">
-            ${luckyText}<br><br>...오히려 좋아! 완전 럭키비키잖아! 🍀✨💖
-        </div>`;
-        
-        this.innerText = '필터 적용 완료! 🎀';
-        this.disabled = true;
-    });
-
-    // ---------------------------------------------------
-    // 5. 다꾸 스티커 찍기 로직 (Idea 10)
-    // ---------------------------------------------------
-    let selectedEmoji = null;
-    const stickerBtns = document.querySelectorAll('.sticker-btn');
-    const receiptArea = document.getElementById('receiptArea');
-
-    stickerBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // 활성화 상태 토글
-            stickerBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedEmoji = this.getAttribute('data-emoji');
-        });
-    });
-
-    // 영수증 영역 클릭 시 스티커 도장 찍기
-    receiptArea.addEventListener('click', function(e) {
-        if (!selectedEmoji) return; // 선택된 스티커가 없으면 무시
-
-        const rect = this.getBoundingClientRect();
-        // 스크롤 등 환경에 상관없이 receiptArea 내부의 상대 좌표 계산
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const sticker = document.createElement('div');
-        sticker.className = 'stamped-sticker';
-        sticker.innerText = selectedEmoji;
-        sticker.style.left = x + 'px';
-        sticker.style.top = y + 'px';
-        // 약간의 랜덤 회전 각도 부여 (-20 ~ 20도)
-        const rot = Math.floor(Math.random() * 40) - 20;
-        sticker.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
-
-        this.appendChild(sticker);
-    });
-
-    // ---------------------------------------------------
-    // 6. 이미지 저장 & 공유 (Idea 1, Web Share)
-    // ---------------------------------------------------
-    document.getElementById('btnDownload').addEventListener('click', function() {
-        const receipt = document.getElementById('receiptArea');
-        const originalBg = receipt.style.backgroundImage;
-        
-        // 버튼 텍스트 변경
-        const btn = this;
-        const originalText = btn.innerText;
-        btn.innerText = "이미지 생성 중... ⏳";
-        
-        // 폰트가 완벽히 로드된 후 html2canvas 실행을 보장하기 위해 딜레이
-        setTimeout(() => {
-            html2canvas(receipt, {
-                scale: 2, // 고해상도 캡처
-                backgroundColor: null,
-                useCORS: true
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `내_운세_영수증_${new Date().getTime()}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-                btn.innerText = originalText;
-            }).catch(err => {
-                console.error("캡처 에러:", err);
-                alert("이미지 저장에 실패했습니다.");
-                btn.innerText = originalText;
-            });
-        }, 300);
-    });
-
-    document.getElementById('btnShare').addEventListener('click', async () => {
-        const name = document.getElementById('userName').value;
-        const currentUrl = window.location.href; 
-        const shareText = `🧾 [MBTI와 함께하는 사주팔자]\n\n${name}님의 운세 영수증이 발급되었습니다.\n마라맛 팩폭부터 원영적 사고까지, 내 운세도 무료로 발급받아보세요!\n👉 `;
-
-        if (navigator.share) {
-            try { await navigator.share({ title: `운세 영수증`, text: shareText, url: currentUrl }); } 
-            catch (e) { if (e.name !== 'AbortError') fallbackToClipboard(shareText + currentUrl); }
-        } else {
-            fallbackToClipboard(shareText + currentUrl);
-        }
-    });
-
-    async function fallbackToClipboard(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-            alert('복사 완료! 인스타 스토리나 카톡에 붙여넣기 해주세요.');
-        } catch (err) { alert('공유 기능을 지원하지 않습니다.'); }
-    }
-
-    // ---------------------------------------------------
-    // 7. 리셋 로직
-    // ---------------------------------------------------
-    document.getElementById('btnReset').addEventListener('click', function() {
-        document.getElementById('resultSection').style.display = 'none';
-        document.getElementById('inputContainer').style.display = 'block';
-        selectedEmoji = null;
-        stickerBtns.forEach(b => b.classList.remove('active'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-</script>
+<script src="js/engine.js"></script>
+<script src="js/data/fortune-data.js"></script>
+<script src="js/data/tarot-data.js"></script>
+<script src="js/keepsake.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
