@@ -213,7 +213,7 @@ const Keepsake = (() => {
         }
 
         // 낙관 (고정)
-        drawText('재미로 보는 운세 · 명운', 170, H - 120, { font: `400 26px ${SANS}`, color: '#8a7d70', align: 'left' });
+        drawText('재미로 보는 운세 · © 2026 엽쌤', 170, H - 120, { font: `400 26px ${SANS}`, color: '#8a7d70', align: 'left' });
         drawSeal('命運', W - 190, H - 190, 120, -0.06, 0.92);
 
         // 사용자가 찍은 도장

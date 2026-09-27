@@ -571,3 +571,9 @@ details.more[open] summary::before { content: '－ '; }
 .sheet p { line-height: 1.75; margin: 0 0 16px; font-size: 0.95rem; }
 .mbti-pick .seg { padding: 3px; border: 1px solid var(--line); border-radius: 12px; gap: 3px; }
 .mbti-pick .seg button { border-color: transparent; }
+
+/* 공통 하단 저작권 */
+.site-footer { margin-top: 26px; }
+.site-footer .footer-note { margin-top: 0; }
+.site-footer .copyright { margin-top: 8px; }
+.site-footer a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
