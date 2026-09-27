@@ -39,36 +39,62 @@
     <!-- 입력 화면 -->
     <section id="inputView">
         <div class="invite-banner" id="inviteBanner" style="display:none;"></div>
+
+        <!-- 입력 전에도 볼 수 있는 오늘의 기운 -->
+        <div class="teaser" id="teaser">
+            <div class="teaser-gz" id="teaserGz"></div>
+            <div>
+                <div class="teaser-date" id="teaserDate"></div>
+                <div class="teaser-text" id="teaserText"></div>
+            </div>
+        </div>
+
+        <!-- 다시 온 사람은 한 번에 -->
+        <div class="card welcome" id="welcomeCard" style="display:none;">
+            <p class="welcome-hi">다시 오셨네요, <b id="welcomeName"></b> 님</p>
+            <p class="small muted" id="welcomeMeta" style="margin:4px 0 16px;"></p>
+            <button type="button" class="btn btn-gold" id="btnQuick">오늘의 운세 바로 보기</button>
+            <button type="button" class="link-btn" id="btnEditInfo">다른 정보로 보기</button>
+        </div>
+
         <form id="fortuneForm" novalidate>
             <div class="field">
-                <input type="text" id="userName" placeholder="이름 (예: 홍길동)" autocomplete="off" maxlength="20">
+                <label class="cap" for="userName">이름</label>
+                <input type="text" id="userName" placeholder="예: 홍길동 (별명도 괜찮아요)" autocomplete="off" maxlength="20">
             </div>
             <div class="field">
-                <input type="text" id="birthDate" placeholder="생년월일 8자리 (예: 19980101)" inputmode="numeric" maxlength="8" autocomplete="off">
+                <label class="cap" for="birthDate">생년월일 (양력)</label>
+                <input type="text" id="birthDate" placeholder="예: 1998.01.01 또는 19980101" inputmode="numeric" maxlength="14" autocomplete="off">
+                <p class="field-note" id="birthPreview"></p>
             </div>
             <div class="field">
-                <label class="cap" for="birthTime">태어난 시간 (선택 · 시주 계산에 쓰입니다)</label>
-                <div class="flex-row">
-                    <input type="time" id="birthTime">
-                    <label class="check" style="margin:0; flex:0 0 auto;"><input type="checkbox" id="timeUnknown"> 모름</label>
+                <span class="cap">성별</span>
+                <div class="seg" data-for="gender">
+                    <button type="button" data-v="F">여성</button>
+                    <button type="button" data-v="M">남성</button>
                 </div>
+                <input type="hidden" id="gender">
             </div>
-            <p class="hint">양력 기준, 한국 표준시로 계산합니다. 23시 이후 출생은 다음 날 자시(子時)로 봅니다.</p>
-            <div class="flex-row field">
-                <select id="gender">
-                    <option value="" disabled selected>성별</option>
-                    <option value="M">남성</option>
-                    <option value="F">여성</option>
-                </select>
-                <select id="mbti">
-                    <option value="" disabled selected>MBTI</option>
-                    <optgroup label="분석가형"><option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option></optgroup>
-                    <optgroup label="외교관형"><option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option></optgroup>
-                    <optgroup label="관리자형"><option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option></optgroup>
-                    <optgroup label="탐험가형"><option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option></optgroup>
-                </select>
+            <div class="field">
+                <span class="cap">MBTI <button type="button" class="link-btn inline" id="btnMbtiQuiz">잘 모르겠어요</button></span>
+                <div class="mbti-pick" id="mbtiPick">
+                    <div class="seg" data-axis="0"><button type="button" data-v="E">E <small>외향</small></button><button type="button" data-v="I">I <small>내향</small></button></div>
+                    <div class="seg" data-axis="1"><button type="button" data-v="S">S <small>감각</small></button><button type="button" data-v="N">N <small>직관</small></button></div>
+                    <div class="seg" data-axis="2"><button type="button" data-v="T">T <small>사고</small></button><button type="button" data-v="F">F <small>감정</small></button></div>
+                    <div class="seg" data-axis="3"><button type="button" data-v="J">J <small>계획</small></button><button type="button" data-v="P">P <small>즉흥</small></button></div>
+                </div>
+                <div class="mbti-quiz" id="mbtiQuiz" style="display:none;"></div>
+                <p class="field-note" id="mbtiPreview"></p>
+                <input type="hidden" id="mbti">
             </div>
-            <label class="check"><input type="checkbox" id="rememberMe"> 내 정보 기억하기 (이 기기에만 저장)</label>
+            <details class="more" id="timeMore">
+                <summary>태어난 시간 추가하기 <span class="muted">(선택)</span></summary>
+                <div class="more-body">
+                    <input type="time" id="birthTime">
+                    <p class="hint" style="margin:8px 2px 0;">시간을 넣으면 사주 여덟 글자를 모두 볼 수 있어요. 모르면 비워 두세요. 한국 표준시 기준이며, 23시 이후 출생은 다음 날 자시(子時)로 봅니다.</p>
+                </div>
+            </details>
+            <label class="check"><input type="checkbox" id="rememberMe" checked> 다음에도 바로 볼 수 있게 기억하기 (이 기기에만 저장)</label>
             <p class="form-error" id="formError"></p>
             <button type="submit" class="btn btn-gold">운명의 흐름 읽기</button>
         </form>
@@ -89,12 +115,30 @@
 
         <!-- ① 오늘 -->
         <div class="tab-panel" data-panel="today">
+            <div class="card omikuji" id="omikuji">
+                <h3 class="card-title">오늘의 점괘 <button type="button" class="qm" data-term="omikuji" aria-label="용어 풀이">?</button></h3>
+                <div class="omi-stage" id="omiStage">
+                    <button type="button" class="omi-cup" id="omiCup" aria-label="점통 흔들기">
+                        <span class="omi-sticks"><i></i><i></i><i></i><i></i><i></i></span>
+                        <span class="omi-body">運</span>
+                    </button>
+                    <p class="omi-guide">점통을 눌러 오늘의 점괘를 뽑아 보세요</p>
+                </div>
+                <div class="omi-result" id="omiResult" style="display:none;">
+                    <div class="omi-stick"><span id="omiHanja"></span></div>
+                    <div class="omi-grade" id="omiGrade"></div>
+                    <p class="omi-plain" id="omiPlain"></p>
+                    <div class="omi-chips" id="omiChips"></div>
+                </div>
+            </div>
+
             <div class="card">
-                <h3 class="card-title">오늘의 총평 <span class="sub" id="todayDate"></span></h3>
+                <h3 class="card-title"><span>오늘의 총평 <button type="button" class="qm" data-term="sipsin" aria-label="용어 풀이">?</button></span><span class="sub" id="todayDate"></span></h3>
                 <div class="day-head">
                     <div class="hanja" id="dayHanja"></div>
                     <div class="name" id="dayName"></div>
                     <div class="kw" id="dayKw"></div>
+                    <div class="plain" id="dayPlain"></div>
                 </div>
                 <p class="lead" id="todayText"></p>
                 <p class="small muted" id="todayRelation" style="margin:12px 0 0;"></p>
@@ -132,7 +176,7 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title">개운(開運) 요소 <span class="sub" id="gaewunSub"></span></h3>
+                <h3 class="card-title"><span>개운(開運) 요소 <button type="button" class="qm" data-term="gaewun" aria-label="용어 풀이">?</button></span><span class="sub" id="gaewunSub"></span></h3>
                 <div class="gaewun" id="gaewunGrid"></div>
             </div>
 
@@ -167,13 +211,13 @@
         <!-- ② 사주 -->
         <div class="tab-panel" data-panel="saju">
             <div class="card">
-                <h3 class="card-title">사주 원국(原局) <span class="sub" id="sajuSub"></span></h3>
+                <h3 class="card-title"><span>사주 원국(原局) <button type="button" class="qm" data-term="wonguk" aria-label="용어 풀이">?</button></span><span class="sub" id="sajuSub"></span></h3>
                 <div class="pillars" id="pillarGrid"></div>
                 <p class="small muted" id="sajuNote" style="margin:10px 0 0;"></p>
             </div>
 
             <div class="card">
-                <h3 class="card-title">나를 상징하는 글자</h3>
+                <h3 class="card-title"><span>나를 상징하는 글자 <button type="button" class="qm" data-term="ilgan" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ilgan">
                     <div class="ilgan-hanja" id="ilganHanja"></div>
                     <div>
@@ -187,7 +231,7 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title">오행 밸런스</h3>
+                <h3 class="card-title"><span>오행 밸런스 <button type="button" class="qm" data-term="ohaeng" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ohaeng">
                     <svg id="ohaengSvg" viewBox="0 0 160 160" aria-label="오행 분포 오각형 그래프"></svg>
                     <div class="ohaeng-bars" id="ohaengBars"></div>
@@ -203,7 +247,7 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title">운의 흐름 <span class="sub" id="dwSub"></span></h3>
+                <h3 class="card-title"><span>운의 흐름 <button type="button" class="qm" data-term="daewoon" aria-label="용어 풀이">?</button></span><span class="sub" id="dwSub"></span></h3>
                 <div class="daewoon" id="dwList"></div>
                 <p class="small" id="dwNow" style="margin:10px 0 14px; line-height:1.7;"></p>
                 <div class="gh-item">
@@ -229,7 +273,7 @@
                 <h3 class="card-title">궁합 보기 <span class="sub">상대의 정보를 입력해 주세요</span></h3>
                 <form id="compatForm" novalidate>
                     <div class="field"><input type="text" id="pName" placeholder="상대 이름" autocomplete="off" maxlength="20"></div>
-                    <div class="field"><input type="text" id="pBirth" placeholder="상대 생년월일 8자리 (양력)" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+                    <div class="field"><input type="text" id="pBirth" placeholder="상대 생년월일 (예: 1998.01.01)" inputmode="numeric" maxlength="14" autocomplete="off"></div>
                     <div class="flex-row field">
                         <select id="pGender">
                             <option value="" disabled selected>성별</option>
@@ -244,7 +288,7 @@
             </div>
 
             <div class="card" id="compatResult" style="display:none;">
-                <h3 class="card-title">두 사람의 궁합</h3>
+                <h3 class="card-title"><span>두 사람의 궁합 <button type="button" class="qm" data-term="compat" aria-label="용어 풀이">?</button></span></h3>
                 <div class="gh-pair" id="ghPair"></div>
                 <div class="gh-score">
                     <div class="num" id="ghTotal"></div>
@@ -325,6 +369,15 @@
 </nav>
 
 <div class="toast" id="toast"></div>
+
+<!-- 용어 풀이 시트 -->
+<div class="sheet-dim" id="sheetDim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-grip"></div>
+    <h4 id="sheetTitle"></h4>
+    <p id="sheetText"></p>
+    <button type="button" class="btn btn-ghost" id="sheetClose">알겠어요</button>
+</div>
 
 <script src="js/engine.js"></script>
 <script src="js/saju.js"></script>

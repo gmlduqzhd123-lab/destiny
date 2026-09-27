@@ -68,6 +68,9 @@ const Compat = (() => {
 
     function mbtiPart(a, b) {
         const x = a.mbti, y = b.mbti;
+        if (!x || !y) {
+            return { title: 'MBTI · 모름', score: 22, max: 30, text: 'MBTI를 모르는 사람이 있어 이 항목은 평균 점수로 계산했습니다. 상대의 MBTI를 알게 되면 다시 확인해 보세요.' };
+        }
         let score = 0;
         const lines = [];
         if (x[0] !== y[0]) { score += 6; lines.push('외향과 내향이 만나 서로의 빈 곳을 채워 줍니다.'); }
