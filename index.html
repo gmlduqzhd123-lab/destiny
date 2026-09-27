@@ -65,8 +65,14 @@
                 <input type="text" id="userName" placeholder="예: 홍길동 (별명도 괜찮아요)" autocomplete="off" maxlength="20">
             </div>
             <div class="field">
-                <label class="cap" for="birthDate">생년월일 (양력)</label>
+                <label class="cap" for="birthDate">생년월일</label>
+                <div class="seg seg-cal" data-for="calType">
+                    <button type="button" data-v="solar" class="on">양력</button>
+                    <button type="button" data-v="lunar">음력</button>
+                </div>
+                <input type="hidden" id="calType" value="solar">
                 <input type="text" id="birthDate" placeholder="예: 1998.01.01 또는 19980101" inputmode="numeric" maxlength="14" autocomplete="off">
+                <label class="check" id="leapWrap" style="display:none; margin:8px 0 0;"><input type="checkbox" id="leapMonth"> 윤달에 태어났어요</label>
                 <p class="field-note" id="birthPreview"></p>
             </div>
             <div class="field">
@@ -275,7 +281,15 @@
                 <h3 class="card-title">궁합 보기 <span class="sub">상대의 정보를 입력해 주세요</span></h3>
                 <form id="compatForm" novalidate>
                     <div class="field"><input type="text" id="pName" placeholder="상대 이름" autocomplete="off" maxlength="20"></div>
-                    <div class="field"><input type="text" id="pBirth" placeholder="상대 생년월일 (예: 1998.01.01)" inputmode="numeric" maxlength="14" autocomplete="off"></div>
+                    <div class="flex-row field">
+                        <select id="pCal" style="flex:0 0 96px;" aria-label="상대 생일 달력">
+                            <option value="solar">양력</option>
+                            <option value="lunar">음력</option>
+                            <option value="leap">음력 윤달</option>
+                        </select>
+                        <input type="text" id="pBirth" placeholder="상대 생년월일 (예: 1998.01.01)" inputmode="numeric" maxlength="14" autocomplete="off">
+                    </div>
+                    <p class="field-note" id="pBirthPreview" style="margin:-6px 2px 10px;"></p>
                     <div class="flex-row field">
                         <select id="pGender">
                             <option value="" disabled selected>성별</option>
@@ -385,6 +399,7 @@
     <button type="button" class="btn btn-ghost" id="sheetClose">알겠어요</button>
 </div>
 
+<script src="js/vendor/korean-lunar-calendar.min.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/saju.js"></script>
 <script src="js/data/saju-data.js"></script>
