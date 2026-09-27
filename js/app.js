@@ -5,6 +5,8 @@ const App = (() => {
     const $ = id => document.getElementById(id);
     const STORE_USER = 'myeongun_user_v3';
     const STORE_TONE = 'myeongun_tone';
+    const STORE_OMIKUJI = 'myeongun_omikuji';
+    const MBTI_TYPES = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'];
 
     const state = { user: null, tone: 'gentle', profile: null, today: null, tab: 'today', invite: null, compat: null };
 
@@ -16,39 +18,145 @@ const App = (() => {
     };
 
     // ---------- 입력 검증 ----------
-    function parseBirth(str) {
-        if (!/^\d{8}$/.test(str)) return { error: '생년월일을 8자리 숫자로 입력해 주세요. (예: 19980101)' };
+    // 19980101, 1998.1.1, 1998-01-01, 1998년 1월 1일, 980101 을 모두 받아 YYYYMMDD로 맞춥니다.
+    function normalizeBirth(raw) {
+        const str = String(raw || '').trim();
+        const cur = new Date().getFullYear() % 100;
+        const full = yy => (+yy <= cur ? '20' : '19') + yy;
+        if (/^\d{8}$/.test(str)) return str;
+        if (/^\d{6}$/.test(str)) return full(str.slice(0, 2)) + str.slice(2);
+        const m = str.match(/^(\d{4}|\d{2})\D+(\d{1,2})\D+(\d{1,2})\D*$/);
+        if (m) return (m[1].length === 2 ? full(m[1]) : m[1]) + m[2].padStart(2, '0') + m[3].padStart(2, '0');
+        return null;
+    }
+
+    function parseBirth(raw) {
+        const str = normalizeBirth(raw);
+        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 1998.01.01' };
         const y = +str.slice(0, 4), m = +str.slice(4, 6), d = +str.slice(6, 8);
         const date = new Date(y, m - 1, d);
         if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
             return { error: '존재하지 않는 날짜입니다. 다시 확인해 주세요.' };
         }
         if (y < 1900 || date > new Date()) return { error: '1900년 이후, 오늘 이전의 날짜를 입력해 주세요.' };
-        return { y, m, d };
+        return { y, m, d, ymd: str };
+    }
+
+    function formatBirth(ymd) {
+        return `${ymd.slice(0, 4)}.${ymd.slice(4, 6)}.${ymd.slice(6, 8)}`;
+    }
+
+    function birthPreview(inputEl, noteEl) {
+        const raw = inputEl.value.trim();
+        if (!raw) { noteEl.textContent = ''; noteEl.classList.remove('err'); return; }
+        const b = parseBirth(raw);
+        if (b.error) {
+            // 아직 입력 중일 수 있으니 8자 이상일 때만 알려 줍니다.
+            noteEl.textContent = raw.replace(/\D/g, '').length >= 6 ? b.error : '';
+            noteEl.classList.add('err');
+            return;
+        }
+        const yp = Saju.calc({ y: b.y, m: b.m, d: b.d }).year;
+        noteEl.textContent = `✓ ${b.y}년 ${b.m}월 ${b.d}일 · ${yp.stem.kor}${yp.branch.kor}년 ${yp.branch.animal}띠`;
+        noteEl.classList.remove('err');
     }
 
     function readForm() {
         const name = $('userName').value.trim();
-        const birth = $('birthDate').value.trim();
         const gender = $('gender').value;
         const mbti = $('mbti').value;
-        const time = $('timeUnknown').checked ? '' : $('birthTime').value;
+        const time = $('birthTime').value;
         if (!name) return { error: '이름을 입력해 주세요.' };
-        const b = parseBirth(birth);
+        const b = parseBirth($('birthDate').value);
         if (b.error) return b;
-        if (!gender) return { error: '성별을 선택해 주세요.' };
-        if (!mbti) return { error: 'MBTI를 선택해 주세요.' };
-        return { user: { name, birth, time, gender, mbti } };
+        if (!gender) return { error: '성별을 골라 주세요.' };
+        if (!mbti) return { error: 'MBTI 네 칸을 모두 골라 주세요. 모르면 "잘 모르겠어요"를 눌러 보세요.' };
+        return { user: { name, birth: b.ymd, time, gender, mbti } };
+    }
+
+    // ---------- 버튼형 입력 (성별 · MBTI) ----------
+    function setGender(v) {
+        $('gender').value = v || '';
+        document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    }
+
+    function setMbti(v) {
+        const letters = (v || '').split('');
+        document.querySelectorAll('#mbtiPick .seg').forEach(seg => {
+            const want = letters[+seg.dataset.axis];
+            seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === want));
+        });
+        syncMbti();
+    }
+
+    function syncMbti() {
+        const letters = [...document.querySelectorAll('#mbtiPick .seg')].map(seg => {
+            const on = seg.querySelector('button.on');
+            return on ? on.dataset.v : '';
+        });
+        const full = letters.every(Boolean) ? letters.join('') : '';
+        $('mbti').value = full;
+        $('mbtiPreview').textContent = full ? `${full} · ${FortuneData.mbti.nick[full]}` : '';
+    }
+
+    function startMbtiQuiz() {
+        const box = $('mbtiQuiz');
+        const answers = [];
+        const step = () => {
+            const i = answers.length;
+            if (i === ExtraData.mbtiQuiz.length) {
+                box.style.display = 'none';
+                $('mbtiPick').style.display = '';
+                setMbti(answers.join(''));
+                $('mbtiPreview').textContent += ' (간이 문항으로 추정한 유형이에요)';
+                return;
+            }
+            const q = ExtraData.mbtiQuiz[i];
+            box.innerHTML = `<div class="qn">${i + 1} / ${ExtraData.mbtiQuiz.length}</div>
+                <div class="qq">${q.q}</div>
+                <div class="qa">
+                    <button type="button" data-v="${q.a[1]}">${q.a[0]}</button>
+                    <button type="button" data-v="${q.b[1]}">${q.b[0]}</button>
+                </div>`;
+            box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+                answers.push(b.dataset.v);
+                step();
+            }));
+        };
+        $('mbtiPick').style.display = 'none';
+        box.style.display = 'block';
+        step();
     }
 
     function fillForm(u) {
         $('userName').value = u.name || '';
-        $('birthDate').value = u.birth || '';
-        $('gender').value = u.gender || '';
-        $('mbti').value = u.mbti || '';
+        $('birthDate').value = u.birth ? formatBirth(u.birth) : '';
+        birthPreview($('birthDate'), $('birthPreview'));
+        setGender(u.gender);
+        setMbti(u.mbti);
         $('birthTime').value = u.time || '';
-        $('timeUnknown').checked = !u.time;
-        $('birthTime').disabled = !u.time;
+        $('timeMore').open = !!u.time;
+    }
+
+    // ---------- 입력 전 첫 화면 ----------
+    function renderTeaser() {
+        const now = new Date();
+        const d = Saju.todayPillars(now).day;
+        $('teaserGz').innerHTML = `${d.stem.hanja}<br>${d.branch.hanja}`;
+        $('teaserDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 오늘의 일진 · ${d.stem.kor}${d.branch.kor}일`;
+        $('teaserText').textContent = ExtraData.dayEl[d.stem.el] + '. 이 기운이 나에게는 어떻게 작용할까요?';
+    }
+
+    function showWelcome(u) {
+        $('welcomeName').textContent = u.name;
+        $('welcomeMeta').textContent = `${formatBirth(u.birth)} · ${u.mbti}`;
+        $('welcomeCard').style.display = 'block';
+        $('fortuneForm').style.display = 'none';
+    }
+
+    function showForm() {
+        $('welcomeCard').style.display = 'none';
+        $('fortuneForm').style.display = 'block';
     }
 
     // ---------- 오늘의 운세 산출 ----------
@@ -87,6 +195,7 @@ const App = (() => {
         $('dayHanja').textContent = g.hanja;
         $('dayName').textContent = `오늘은 ${g.name}(${g.hanja})의 날`;
         $('dayKw').textContent = g.kw;
+        $('dayPlain').textContent = `쉽게 말해, ${ExtraData.plain[t.godKey]}`;
         $('todayText').textContent = g.day[tone];
 
         const notes = [];
@@ -124,6 +233,63 @@ const App = (() => {
             <div><b>행운의 숫자</b><span>${e.numbers}</span></div>
             <div><b>행운의 물건</b><span>${e.item}</span></div>
             <div style="grid-column: span 2;"><b>개운 음식</b><span>${e.food}</span></div>`;
+    }
+
+    function todayGrade() {
+        const avg = Fortune.average(state.today.scores);
+        return ExtraData.grades.find(gr => avg >= gr.min);
+    }
+
+    function omikujiKey() {
+        return `${Fortune.userKey(state.user)}-${Engine.ymd(new Date())}`;
+    }
+
+    function renderOmikuji() {
+        const drawn = (store.get(STORE_OMIKUJI) || {})[omikujiKey()];
+        $('omiStage').style.display = drawn ? 'none' : 'block';
+        $('omiResult').style.display = drawn ? 'block' : 'none';
+        if (!drawn) return;
+        const gr = todayGrade(), t = state.today, e = SajuData.elements[state.profile.weak];
+        $('omiHanja').innerHTML = gr.hanja.split('').join('<br>');
+        $('omiGrade').innerHTML = `${gr.name}(${gr.hanja})<small>${gr.desc}</small>`;
+        $('omiPlain').textContent = `오늘은 ${ExtraData.plain[t.godKey]}이에요.` + (gr.name === '신중' ? ' 아래 전화위복 풀이도 꼭 읽어 보세요.' : '');
+        $('omiChips').innerHTML = [
+            `<i class="color-dot" style="background:${e.hex}"></i>행운의 색 ${e.color.split(' · ')[0]}`,
+            `행운의 숫자 ${e.numbers.split(', ')[0]}`,
+            `행운의 방향 ${e.direction}`
+        ].map(x => `<span>${x}</span>`).join('');
+    }
+
+    function drawOmikuji() {
+        const cup = $('omiCup');
+        if (cup.classList.contains('shake')) return;
+        cup.classList.add('shake');
+        if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+        setTimeout(() => {
+            cup.classList.remove('shake');
+            const all = store.get(STORE_OMIKUJI) || {};
+            // 오래된 기록은 정리하고 오늘 것만 남깁니다.
+            const today = Engine.ymd(new Date());
+            Object.keys(all).forEach(k => { if (!k.endsWith(today)) delete all[k]; });
+            all[omikujiKey()] = true;
+            store.set(STORE_OMIKUJI, all);
+            renderOmikuji();
+            renderKeepsake();
+        }, 900);
+    }
+
+    function openSheet(term) {
+        const g = ExtraData.glossary[term];
+        if (!g) return;
+        $('sheetTitle').textContent = g.title;
+        $('sheetText').textContent = g.text;
+        $('sheet').classList.add('show');
+        $('sheetDim').classList.add('show');
+    }
+
+    function closeSheet() {
+        $('sheet').classList.remove('show');
+        $('sheetDim').classList.remove('show');
     }
 
     function todayQuote() {
@@ -282,13 +448,12 @@ const App = (() => {
         const b = parseBirth(birth);
         if (b.error) return b;
         if (!gender) return { error: '상대 성별을 선택해 주세요.' };
-        if (!mbti) return { error: '상대 MBTI를 선택해 주세요.' };
-        return { partner: { name, birth, time: '', gender, mbti } };
+        return { partner: { name, birth: b.ymd, time: '', gender, mbti } };
     }
 
     function fillPartner(p) {
         $('pName').value = p.name;
-        $('pBirth').value = p.birth;
+        $('pBirth').value = formatBirth(p.birth);
         $('pGender').value = p.gender;
         $('pMbti').value = p.mbti;
     }
@@ -304,7 +469,7 @@ const App = (() => {
         if (!c) return;
         const person = x => {
             const st = x.profile.saju.day.stem;
-            return `<div class="p"><div class="ilgan-hanja ${EL_CLASS(st.el)}">${st.hanja}</div><div class="nm">${escapeHtml(x.name)} · ${x.mbti}</div></div>`;
+            return `<div class="p"><div class="ilgan-hanja ${EL_CLASS(st.el)}">${st.hanja}</div><div class="nm">${escapeHtml(x.name)} · ${x.mbti || 'MBTI ?'}</div></div>`;
         };
         $('ghPair').innerHTML = person(c.a) + '<div class="amp">緣</div>' + person(c.b);
         $('ghTotal').textContent = c.total;
@@ -340,7 +505,7 @@ const App = (() => {
                 label, stem: p && p.stem, branch: p && p.branch, me: i === 1
             })),
             ilganLine: `${sj.day.stem.hanja}${Saju.EL_HANJA[sj.day.stem.el]} · ${state.profile.ilgan.title}`,
-            dayTitle: `오늘은 ${t.god.name}(${t.god.hanja})의 날`,
+            dayTitle: `${isOmikujiDrawn() ? `점괘 ${todayGrade().hanja} · ` : ''}오늘은 ${t.god.name}(${t.god.hanja})의 날`,
             name: u.name,
             dateLabel: dateLabel(new Date()),
             subtitle: `${u.mbti} · ${FortuneData.mbti.nick[u.mbti]}`,
@@ -350,6 +515,10 @@ const App = (() => {
         };
     }
 
+    function isOmikujiDrawn() {
+        return !!(store.get(STORE_OMIKUJI) || {})[omikujiKey()];
+    }
+
     function renderKeepsake() {
         Keepsake.render(keepsakeData());
     }
@@ -357,6 +526,7 @@ const App = (() => {
     function renderAll() {
         renderHeader();
         renderToday();
+        renderOmikuji();
         renderSaju();
         renderCompat();
         renderKeepsake();
@@ -380,6 +550,7 @@ const App = (() => {
         state.today = computeToday(state.user, new Date());
         $('inputView').style.display = 'none';
         $('resultView').style.display = 'block';
+        document.body.classList.add('result-mode');
         $('tabbar').style.display = 'flex';
         Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
         Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
@@ -404,6 +575,8 @@ const App = (() => {
         $('resultView').style.display = 'none';
         $('tabbar').style.display = 'none';
         $('inputView').style.display = 'block';
+        document.body.classList.remove('result-mode');
+        showForm();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -431,8 +604,8 @@ const App = (() => {
 
     function shareSummary() {
         const u = state.user, s = state.today.scores;
-        const g = state.today.god, me = state.profile.saju.day.stem;
-        return `📜 ${u.name}(${u.mbti}) 님의 오늘 명운\n${me.hanja}${Saju.EL_HANJA[me.el]} · ${state.profile.ilgan.title}\n오늘은 ${g.name}(${g.hanja})의 날\n\n연애운 ${s.love}점 · 금전운 ${s.money}점 · 직장운 ${s.work}점\n\n나의 사주와 타로도 확인해 보세요.`;
+        const g = state.today.god, me = state.profile.saju.day.stem, gr = todayGrade();
+        return `📜 ${u.name}(${u.mbti}) 님의 오늘 명운 · 점괘 ${gr.hanja}(${gr.name})\n${me.hanja}${Saju.EL_HANJA[me.el]} · ${state.profile.ilgan.title}\n오늘은 ${g.name}(${g.hanja})의 날\n\n연애운 ${s.love}점 · 금전운 ${s.money}점 · 직장운 ${s.work}점\n\n나의 사주와 타로도 확인해 보세요.`;
     }
 
     async function onShare() {
@@ -462,14 +635,31 @@ const App = (() => {
             showResult();
         });
 
-        $('timeUnknown').addEventListener('change', e => {
-            $('birthTime').disabled = e.target.checked;
-            if (e.target.checked) $('birthTime').value = '';
+        $('birthDate').addEventListener('input', () => birthPreview($('birthDate'), $('birthPreview')));
+        $('birthDate').addEventListener('blur', e => {
+            const b = parseBirth(e.target.value);
+            if (!b.error) e.target.value = formatBirth(b.ymd);
         });
+        document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.addEventListener('click', () => setGender(b.dataset.v)));
+        document.querySelectorAll('#mbtiPick .seg button').forEach(b => b.addEventListener('click', () => {
+            b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+            syncMbti();
+        }));
+        $('btnMbtiQuiz').addEventListener('click', startMbtiQuiz);
+        $('btnQuick').addEventListener('click', () => {
+            state.user = store.get(STORE_USER);
+            if (state.user) showResult(); else showForm();
+        });
+        $('btnEditInfo').addEventListener('click', showForm);
 
-        $('birthDate').addEventListener('input', e => {
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8);
+        $('omiCup').addEventListener('click', drawOmikuji);
+        document.addEventListener('click', e => {
+            const q = e.target.closest('.qm');
+            if (q) openSheet(q.dataset.term);
         });
+        $('sheetDim').addEventListener('click', closeSheet);
+        $('sheetClose').addEventListener('click', closeSheet);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
         document.querySelectorAll('#tabbar button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
@@ -503,8 +693,9 @@ const App = (() => {
             runCompat(r.partner);
             $('compatResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-        $('pBirth').addEventListener('input', e => {
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8);
+        $('pBirth').addEventListener('blur', e => {
+            const b = parseBirth(e.target.value);
+            if (!b.error) e.target.value = formatBirth(b.ymd);
         });
         $('btnInvite').addEventListener('click', () => {
             const u = state.user;
@@ -520,7 +711,8 @@ const App = (() => {
         Keepsake.init($('keepsakeCanvas'));
         Tarot.init();
         Journal.init(ok => toast(ok ? '오늘의 기록을 저장했습니다.' : '이 환경에서는 기록을 저장할 수 없습니다.'));
-        $('pMbti').innerHTML = $('mbti').innerHTML;
+        $('pMbti').innerHTML = '<option value="">MBTI 모름</option>' + MBTI_TYPES.map(t => `<option>${t}</option>`).join('');
+        renderTeaser();
 
         const inv = Compat.readInvite(location.search);
         if (inv && !parseBirth(inv.birth).error) {
@@ -529,9 +721,9 @@ const App = (() => {
             $('inviteBanner').style.display = 'block';
         }
         const saved = store.get(STORE_USER);
-        if (saved) {
+        if (saved && saved.name && saved.birth && saved.gender && saved.mbti) {
             fillForm(saved);
-            $('rememberMe').checked = true;
+            showWelcome(saved);
         }
         state.tone = store.get(STORE_TONE) === 'direct' ? 'direct' : 'gentle';
         bind();
