@@ -577,3 +577,7 @@ details.more[open] summary::before { content: '－ '; }
 .site-footer .footer-note { margin-top: 0; }
 .site-footer .copyright { margin-top: 8px; }
 .site-footer a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 양력/음력 선택 */
+.seg-cal { margin-bottom: 8px; }
+.seg-cal button { padding: 8px 6px; font-size: 0.85rem; }

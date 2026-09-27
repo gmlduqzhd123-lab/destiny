@@ -42,23 +42,72 @@ const App = (() => {
         return { y, m, d, ymd: str };
     }
 
+    /**
+     * 양력·음력 생일을 모두 양력 YYYYMMDD로 맞춥니다. 사주 계산은 항상 양력 기준입니다.
+     * 음력 변환은 한국천문연구원 기준 음력표(korean-lunar-calendar)를 씁니다.
+     * @param {'solar'|'lunar'|'leap'} cal  leap = 음력 윤달
+     */
+    function resolveBirth(raw, cal) {
+        if (cal !== 'lunar' && cal !== 'leap') return parseBirth(raw);
+        const str = normalizeBirth(raw);
+        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 1998.01.01' };
+        const ly = +str.slice(0, 4), lm = +str.slice(4, 6), ld = +str.slice(6, 8);
+        if (ly < 1900 || lm < 1 || lm > 12 || ld < 1 || ld > 30) return { error: '음력 날짜를 다시 확인해 주세요. (1900년 이후, 1~12월, 1~30일)' };
+        const leap = cal === 'leap';
+        let solar = null;
+        try {
+            const conv = new KoreanLunarCalendar();
+            if (conv.setLunarDate(ly, lm, ld, leap)) solar = conv.getSolarCalendar();
+        } catch (e) { /* 아래에서 오류로 처리 */ }
+        if (!solar) {
+            return { error: leap ? `${ly}년에는 윤${lm}월 ${ld}일이 없어요. 윤달 여부와 날짜를 확인해 주세요.` : '음력에 없는 날짜예요. 날짜를 다시 확인해 주세요.' };
+        }
+        const b = parseBirth(`${solar.year}${String(solar.month).padStart(2, '0')}${String(solar.day).padStart(2, '0')}`);
+        if (b.error) return b;
+        return { ...b, lunar: str, leap };
+    }
+
     function formatBirth(ymd) {
         return `${ymd.slice(0, 4)}.${ymd.slice(4, 6)}.${ymd.slice(6, 8)}`;
     }
 
-    function birthPreview(inputEl, noteEl) {
+    // 음력으로 입력한 사람은 음력 생일을 먼저 보여 줍니다.
+    function birthLabel(u) {
+        return u.cal === 'lunar' ? `음력 ${formatBirth(u.lunar)}${u.leap ? '(윤달)' : ''}` : formatBirth(u.birth);
+    }
+
+    function birthPreview(inputEl, noteEl, cal) {
         const raw = inputEl.value.trim();
         if (!raw) { noteEl.textContent = ''; noteEl.classList.remove('err'); return; }
-        const b = parseBirth(raw);
+        const b = resolveBirth(raw, cal);
         if (b.error) {
-            // 아직 입력 중일 수 있으니 8자 이상일 때만 알려 줍니다.
+            // 아직 입력 중일 수 있으니 6자 이상일 때만 알려 줍니다.
             noteEl.textContent = raw.replace(/\D/g, '').length >= 6 ? b.error : '';
             noteEl.classList.add('err');
             return;
         }
         const yp = Saju.calc({ y: b.y, m: b.m, d: b.d }).year;
-        noteEl.textContent = `✓ ${b.y}년 ${b.m}월 ${b.d}일 · ${yp.stem.kor}${yp.branch.kor}년 ${yp.branch.animal}띠`;
+        const tti = `${yp.stem.kor}${yp.branch.kor}년 ${yp.branch.animal}띠`;
+        if (b.lunar) {
+            const ly = +b.lunar.slice(0, 4), lm = +b.lunar.slice(4, 6), ld = +b.lunar.slice(6, 8);
+            noteEl.textContent = `✓ 음력 ${ly}년 ${b.leap ? '윤' : ''}${lm}월 ${ld}일 → 양력 ${b.y}년 ${b.m}월 ${b.d}일 · ${tti}`;
+        } else {
+            noteEl.textContent = `✓ ${b.y}년 ${b.m}월 ${b.d}일 · ${tti}`;
+        }
         noteEl.classList.remove('err');
+    }
+
+    function mainCal() {
+        if ($('calType').value !== 'lunar') return 'solar';
+        return $('leapMonth').checked ? 'leap' : 'lunar';
+    }
+
+    function setCal(v) {
+        $('calType').value = v;
+        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+        $('leapWrap').style.display = v === 'lunar' ? 'flex' : 'none';
+        if (v !== 'lunar') $('leapMonth').checked = false;
+        birthPreview($('birthDate'), $('birthPreview'), mainCal());
     }
 
     function readForm() {
@@ -67,11 +116,13 @@ const App = (() => {
         const mbti = $('mbti').value;
         const time = $('birthTime').value;
         if (!name) return { error: '이름을 입력해 주세요.' };
-        const b = parseBirth($('birthDate').value);
+        const b = resolveBirth($('birthDate').value, mainCal());
         if (b.error) return b;
         if (!gender) return { error: '성별을 골라 주세요.' };
         if (!mbti) return { error: 'MBTI 네 칸을 모두 골라 주세요. 모르면 "잘 모르겠어요"를 눌러 보세요.' };
-        return { user: { name, birth: b.ymd, time, gender, mbti } };
+        const user = { name, birth: b.ymd, time, gender, mbti };
+        if (b.lunar) Object.assign(user, { cal: 'lunar', lunar: b.lunar, leap: b.leap });
+        return { user };
     }
 
     // ---------- 버튼형 입력 (성별 · MBTI) ----------
@@ -130,8 +181,10 @@ const App = (() => {
 
     function fillForm(u) {
         $('userName').value = u.name || '';
-        $('birthDate').value = u.birth ? formatBirth(u.birth) : '';
-        birthPreview($('birthDate'), $('birthPreview'));
+        const lunar = u.cal === 'lunar' && u.lunar;
+        $('birthDate').value = lunar ? formatBirth(u.lunar) : (u.birth ? formatBirth(u.birth) : '');
+        $('leapMonth').checked = !!(lunar && u.leap);
+        setCal(lunar ? 'lunar' : 'solar');
         setGender(u.gender);
         setMbti(u.mbti);
         $('birthTime').value = u.time || '';
@@ -149,7 +202,7 @@ const App = (() => {
 
     function showWelcome(u) {
         $('welcomeName').textContent = u.name;
-        $('welcomeMeta').textContent = `${formatBirth(u.birth)} · ${u.mbti}`;
+        $('welcomeMeta').textContent = `${birthLabel(u)} · ${u.mbti}`;
         $('welcomeCard').style.display = 'block';
         $('fortuneForm').style.display = 'none';
     }
@@ -176,7 +229,8 @@ const App = (() => {
         const u = state.user;
         $('whoName').textContent = `${u.name} 님`;
         const y = state.profile.saju.year;
-        $('whoMeta').textContent = `${u.birth.slice(0, 4)}.${u.birth.slice(4, 6)}.${u.birth.slice(6)}${u.time ? ' ' + u.time : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
+        const bl = u.cal === 'lunar' ? `${birthLabel(u)} (양력 ${formatBirth(u.birth)})` : formatBirth(u.birth);
+        $('whoMeta').textContent = `${bl}${u.time ? ' ' + u.time : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
         document.querySelectorAll('#toneToggle button').forEach(b => b.classList.toggle('on', b.dataset.tone === state.tone));
     }
 
@@ -445,7 +499,7 @@ const App = (() => {
         const gender = $('pGender').value;
         const mbti = $('pMbti').value;
         if (!name) return { error: '상대 이름을 입력해 주세요.' };
-        const b = parseBirth(birth);
+        const b = resolveBirth(birth, $('pCal').value);
         if (b.error) return b;
         if (!gender) return { error: '상대 성별을 선택해 주세요.' };
         return { partner: { name, birth: b.ymd, time: '', gender, mbti } };
@@ -453,7 +507,9 @@ const App = (() => {
 
     function fillPartner(p) {
         $('pName').value = p.name;
+        $('pCal').value = 'solar';
         $('pBirth').value = formatBirth(p.birth);
+        birthPreview($('pBirth'), $('pBirthPreview'), 'solar');
         $('pGender').value = p.gender;
         $('pMbti').value = p.mbti;
     }
@@ -635,11 +691,13 @@ const App = (() => {
             showResult();
         });
 
-        $('birthDate').addEventListener('input', () => birthPreview($('birthDate'), $('birthPreview')));
+        $('birthDate').addEventListener('input', () => birthPreview($('birthDate'), $('birthPreview'), mainCal()));
         $('birthDate').addEventListener('blur', e => {
-            const b = parseBirth(e.target.value);
-            if (!b.error) e.target.value = formatBirth(b.ymd);
+            const n = normalizeBirth(e.target.value);
+            if (n) e.target.value = formatBirth(n);
         });
+        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.addEventListener('click', () => setCal(b.dataset.v)));
+        $('leapMonth').addEventListener('change', () => birthPreview($('birthDate'), $('birthPreview'), mainCal()));
         document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.addEventListener('click', () => setGender(b.dataset.v)));
         document.querySelectorAll('#mbtiPick .seg button').forEach(b => b.addEventListener('click', () => {
             b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -694,9 +752,12 @@ const App = (() => {
             $('compatResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
         $('pBirth').addEventListener('blur', e => {
-            const b = parseBirth(e.target.value);
-            if (!b.error) e.target.value = formatBirth(b.ymd);
+            const n = normalizeBirth(e.target.value);
+            if (n) e.target.value = formatBirth(n);
         });
+        const pPreview = () => birthPreview($('pBirth'), $('pBirthPreview'), $('pCal').value);
+        $('pBirth').addEventListener('input', pPreview);
+        $('pCal').addEventListener('change', pPreview);
         $('btnInvite').addEventListener('click', () => {
             const u = state.user;
             shareOrCopy('명운 궁합 초대', `${u.name} 님이 명운에서 궁합을 보자고 초대했습니다. 내 정보만 입력하면 두 사람의 궁합이 바로 나옵니다.`, Compat.inviteUrl(u, appUrl()));
