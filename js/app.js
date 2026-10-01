@@ -206,13 +206,17 @@ const App = (() => {
 
     function correctionText(c, placeName) {
         if (!c) return '';
-        if (c.lmt) return `1908년 이전은 그 지역 시각을 그대로 써서 보정하지 않아요.`;
-        const sign = c.diffMin > 0 ? '+' : '−';
+        const signed = n => `${n > 0 ? '+' : '−'}${Math.abs(n)}분`;
+        const parts = [];
+        if (c.lmt) parts.push('1908년 이전이라 지역 시각 그대로');
+        else if (c.lonMin) parts.push(`경도 ${signed(c.lonMin)}`);
+        if (c.dst) parts.push('서머타임 −60분');
+        if (c.eotMin) parts.push(`균시차 ${signed(c.eotMin)}`);
         const notes = [];
-        if (c.dst) notes.push('당시 서머타임 1시간 반영');
         if (c.offset === 510 || c.offset === 570) notes.push('당시 표준시 UTC+8:30 반영');
         if (c.dayShift < 0) notes.push('보정하면 전날 밤이에요');
-        return `${placeName} 기준 실제 태양시 ${c.solar} (${sign}${Math.abs(c.diffMin)}분)` + (notes.length ? ` · ${notes.join(' · ')}` : '');
+        if (c.dayShift > 0) notes.push('보정하면 다음 날 새벽이에요');
+        return `${placeName} 기준 진태양시 ${c.solar} (${parts.join(', ') || '보정 없음'})` + (notes.length ? ` · ${notes.join(' · ')}` : '');
     }
 
     function timePreview() {
