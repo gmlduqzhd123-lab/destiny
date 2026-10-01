@@ -5,7 +5,9 @@
 const Fortune = (() => {
     function birthOf(user) {
         const [hh, mm] = user.time ? user.time.split(':').map(Number) : [null, 0];
-        return { y: +user.birth.slice(0, 4), m: +user.birth.slice(4, 6), d: +user.birth.slice(6, 8), hour: hh, minute: mm };
+        // 태어난 지역이 있으면 경도로 출생 시각을 보정합니다 (지역 없이 저장된 예전 기록은 보정하지 않음).
+        const place = user.time && user.place ? Saju.PLACE_MAP[user.place] : null;
+        return { y: +user.birth.slice(0, 4), m: +user.birth.slice(4, 6), d: +user.birth.slice(6, 8), hour: hh, minute: mm, lon: place ? place.lon : null };
     }
 
     function profile(user) {
@@ -20,7 +22,9 @@ const Fortune = (() => {
     }
 
     function userKey(user) {
-        return `${user.name}-${user.birth}-${user.time || ''}-${user.gender}-${user.mbti}`;
+        // 지역은 시간을 넣었을 때만 결과에 영향을 주므로 그때만 키에 넣습니다 (예전 기록과 키 호환).
+        const place = user.time && user.place ? '-' + user.place : '';
+        return `${user.name}-${user.birth}-${user.time || ''}-${user.gender}-${user.mbti}${place}`;
     }
 
     const WEALTH = ['pyeonjae', 'jeongjae'];
