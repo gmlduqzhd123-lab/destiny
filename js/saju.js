@@ -50,6 +50,23 @@ const Saju = (() => {
         return ((lon % 360) + 360) % 360;
     }
 
+    /**
+     * 균시차(분): 진태양시 − 평균태양시. 2월 중순 약 −14분, 11월 초 약 +16분.
+     * NOAA/Meeus 근사식 (오차 수십 초 이내)
+     */
+    function equationOfTime(jd) {
+        const T = (jd - 2451545.0) / 36525;
+        const rad = Math.PI / 180;
+        const L0 = (280.46646 + 36000.76983 * T + 0.0003032 * T * T) * rad;
+        const M = (357.52911 + 35999.05029 * T - 0.0001537 * T * T) * rad;
+        const e = 0.016708634 - 0.000042037 * T - 0.0000001267 * T * T;
+        const eps = (23.439291 - 0.0130042 * T) * rad;
+        const y = Math.tan(eps / 2) ** 2;
+        const E = y * Math.sin(2 * L0) - 2 * e * Math.sin(M) + 4 * e * y * Math.sin(M) * Math.cos(2 * L0)
+            - 0.5 * y * y * Math.sin(4 * L0) - 1.25 * e * e * Math.sin(2 * M);
+        return E / rad * 4;
+    }
+
     // 0 = 寅월(입춘~경칩), 1 = 卯월, ... 10 = 子월, 11 = 丑월
     function solarMonthIndex(jd) {
         return Math.floor((((sunLongitude(jd) - 315) % 360) + 360) % 360 / 30);
@@ -154,11 +171,17 @@ const Saju = (() => {
         if (hasTime && typeof b.lon === 'number') {
             const w = wallToUtc(wallMs, b.lon);
             utcMs = w.utc;
-            localMs = utcMs + b.lon * 4 * 60000; // 경도 15°마다 1시간 (평균태양시)
+            // 표준 자오선과의 경도 차이 (15°마다 1시간). 서머타임 1시간은 따로 셉니다.
+            const lonMin = w.lmt ? 0 : b.lon * 4 - (w.offset - (w.dst ? 60 : 0));
+            const eotMin = equationOfTime(utcMs / 86400000 + 2440587.5);
+            // 진태양시 = UTC + 경도 시차 + 균시차
+            localMs = utcMs + (b.lon * 4 + eotMin) * 60000;
             correction = {
                 wall: hhmm(wallMs),
                 solar: hhmm(localMs),
                 diffMin: Math.round((localMs - wallMs) / 60000),
+                lonMin: Math.round(lonMin),
+                eotMin: Math.round(eotMin),
                 dst: w.dst,
                 offset: w.offset,
                 lmt: w.lmt,
@@ -300,7 +323,7 @@ const Saju = (() => {
 
     return {
         EL, EL_KOR, EL_HANJA, STEMS, BRANCHES,
-        PLACES, PLACE_MAP, calc, pillarOf, sexagenary, dayIndex, sunLongitude, julianDay,
+        PLACES, PLACE_MAP, calc, equationOfTime, pillarOf, sexagenary, dayIndex, sunLongitude, julianDay,
         tenGod, tenGodOfBranch, elementRelation, stemCombine, branchRelation,
         elementCounts, weakestElement, strongestElement, daewoon, todayPillars
     };
