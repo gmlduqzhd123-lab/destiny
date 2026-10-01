@@ -3,7 +3,8 @@
  * - 일주: 1900-01-01(甲戌일) 기준 60갑자 순환
  * - 년주·월주: 태양 황경(절기)으로 계산 — 입춘(315°)에 해가 바뀌고, 절입(315°+30°×n)마다 달이 바뀝니다.
  * - 시주: 일간 기준 시두법. 23시 이후 출생은 다음 날 자시(子時)로 봅니다.
- * - 입력 시각은 한국 표준시(UTC+9)로 간주합니다.
+ * - 태어난 지역(경도)을 주면, 당시 한국 표준시·서머타임 이력을 반영해 실제 순간(UTC)을 구하고
+ *   그 지역의 평균태양시로 시주·일주를 정합니다. 지역이 없으면 입력 시각을 그대로 씁니다.
  */
 const Saju = (() => {
     const EL = ['wood', 'fire', 'earth', 'metal', 'water'];
@@ -54,6 +55,77 @@ const Saju = (() => {
         return Math.floor((((sunLongitude(jd) - 315) % 360) + 360) % 360 / 30);
     }
 
+    // ---------- 출생 시각 보정 ----------
+    // 한국 표준시·서머타임 이력 (tzdb Asia/Seoul): [바뀐 순간(UTC), UTC와의 차이(분), 서머타임 여부]
+    // 1908-04-01 이전은 지역마다 평균태양시를 썼습니다.
+    const KR_TZ = [
+        [Date.UTC(1908, 2, 31, 15, 33), 510, false],
+        [Date.UTC(1911, 11, 31, 15, 30), 540, false],
+        [Date.UTC(1948, 4, 31, 15, 0), 600, true],
+        [Date.UTC(1948, 8, 12, 14, 0), 540, false],
+        [Date.UTC(1949, 3, 2, 15, 0), 600, true],
+        [Date.UTC(1949, 8, 10, 14, 0), 540, false],
+        [Date.UTC(1950, 2, 31, 15, 0), 600, true],
+        [Date.UTC(1950, 8, 9, 14, 0), 540, false],
+        [Date.UTC(1951, 4, 5, 15, 0), 600, true],
+        [Date.UTC(1951, 8, 8, 14, 0), 540, false],
+        [Date.UTC(1954, 2, 20, 15, 0), 510, false],
+        [Date.UTC(1955, 4, 4, 15, 30), 570, true],
+        [Date.UTC(1955, 8, 8, 14, 30), 510, false],
+        [Date.UTC(1956, 4, 19, 15, 30), 570, true],
+        [Date.UTC(1956, 8, 29, 14, 30), 510, false],
+        [Date.UTC(1957, 4, 4, 15, 30), 570, true],
+        [Date.UTC(1957, 8, 21, 14, 30), 510, false],
+        [Date.UTC(1958, 4, 3, 15, 30), 570, true],
+        [Date.UTC(1958, 8, 20, 14, 30), 510, false],
+        [Date.UTC(1959, 4, 2, 15, 30), 570, true],
+        [Date.UTC(1959, 8, 19, 14, 30), 510, false],
+        [Date.UTC(1960, 3, 30, 15, 30), 570, true],
+        [Date.UTC(1960, 8, 17, 14, 30), 510, false],
+        [Date.UTC(1961, 7, 9, 15, 30), 540, false],
+        [Date.UTC(1987, 4, 9, 17, 0), 600, true],
+        [Date.UTC(1987, 9, 10, 17, 0), 540, false],
+        [Date.UTC(1988, 4, 7, 17, 0), 600, true],
+        [Date.UTC(1988, 9, 8, 17, 0), 540, false]
+    ];
+
+    // 태어난 지역 (경도, 동경 °)
+    const PLACES = [
+        { group: '서울·경기·인천', list: [['seoul', '서울', 126.98], ['incheon', '인천', 126.71], ['suwon', '수원·경기 남부', 127.03], ['uijeongbu', '의정부·경기 북부', 127.05]] },
+        { group: '강원', list: [['chuncheon', '춘천', 127.73], ['wonju', '원주', 127.95], ['gangneung', '강릉·동해', 128.88]] },
+        { group: '충청', list: [['daejeon', '대전', 127.38], ['sejong', '세종', 127.29], ['cheongju', '청주', 127.49], ['chungju', '충주', 127.93], ['cheonan', '천안·아산', 127.15], ['hongseong', '홍성·서산', 126.66]] },
+        { group: '전라', list: [['jeonju', '전주', 127.15], ['gunsan', '군산·익산', 126.74], ['gwangju', '광주', 126.85], ['mokpo', '목포', 126.39], ['suncheon', '순천·여수', 127.56]] },
+        { group: '경상', list: [['daegu', '대구', 128.60], ['andong', '안동', 128.73], ['pohang', '포항·경주', 129.36], ['busan', '부산', 129.08], ['ulsan', '울산', 129.31], ['changwon', '창원·마산', 128.68], ['jinju', '진주', 128.11], ['ulleung', '울릉도', 130.90]] },
+        { group: '제주', list: [['jeju', '제주·서귀포', 126.53]] },
+        { group: '북한', list: [['pyongyang', '평양', 125.75], ['hamhung', '함흥', 127.54], ['sinuiju', '신의주', 124.40]] }
+    ];
+    const PLACE_MAP = {};
+    PLACES.forEach(g => g.list.forEach(([id, name, lon]) => { PLACE_MAP[id] = { id, name, lon }; }));
+
+    function koreaZoneAt(utcMs) {
+        let cur = null;
+        for (const [t, off, dst] of KR_TZ) {
+            if (utcMs >= t) cur = { off, dst }; else break;
+        }
+        return cur;
+    }
+
+    // 벽시계 시각 → 실제 순간(UTC ms). 1908년 이전은 그 지역 평균태양시로 봅니다.
+    function wallToUtc(wallMs, lon) {
+        let utc = wallMs - 540 * 60000;
+        for (let i = 0; i < 3; i++) {
+            const z = koreaZoneAt(utc);
+            utc = wallMs - (z ? z.off : lon * 4) * 60000;
+        }
+        const z = koreaZoneAt(utc);
+        return { utc, offset: z ? z.off : null, dst: !!(z && z.dst), lmt: !z };
+    }
+
+    function hhmm(ms) {
+        const d = new Date(Math.round(ms / 60000) * 60000);
+        return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+    }
+
     // ---------- 간지 ----------
     function sexagenary(stem, branch) {
         return (((6 * stem - 5 * branch) % 60) + 60) % 60;
@@ -70,13 +142,32 @@ const Saju = (() => {
     }
 
     /**
-     * @param {{y:number,m:number,d:number,hour?:number|null,minute?:number}} b
+     * @param {{y:number,m:number,d:number,hour?:number|null,minute?:number,lon?:number|null}} b
+     *        lon: 태어난 지역의 경도. 있으면 표준시·서머타임 이력과 경도로 시각을 보정합니다.
      */
     function calc(b) {
         const hasTime = b.hour !== null && b.hour !== undefined;
-        const hour = hasTime ? b.hour : 12;
-        const minute = hasTime ? (b.minute || 0) : 0;
-        const jd = julianDay(b.y, b.m, b.d, hour, minute);
+        const wallMs = Date.UTC(b.y, b.m - 1, b.d, hasTime ? b.hour : 12, hasTime ? (b.minute || 0) : 0);
+        let utcMs = wallMs - 540 * 60000;
+        let localMs = wallMs; // 시주·일주를 정하는 시각
+        let correction = null;
+        if (hasTime && typeof b.lon === 'number') {
+            const w = wallToUtc(wallMs, b.lon);
+            utcMs = w.utc;
+            localMs = utcMs + b.lon * 4 * 60000; // 경도 15°마다 1시간 (평균태양시)
+            correction = {
+                wall: hhmm(wallMs),
+                solar: hhmm(localMs),
+                diffMin: Math.round((localMs - wallMs) / 60000),
+                dst: w.dst,
+                offset: w.offset,
+                lmt: w.lmt,
+                dayShift: Math.floor(localMs / 86400000) - Math.floor(wallMs / 86400000)
+            };
+        }
+        const jd = utcMs / 86400000 + 2440587.5;
+        const local = new Date(localMs);
+        const hour = local.getUTCHours();
 
         const mIdx = solarMonthIndex(jd);
         let year = b.y;
@@ -87,8 +178,8 @@ const Saju = (() => {
         const mStem = (yStem * 2 + 2 + mIdx) % 10;
         const mBranch = (mIdx + 2) % 12;
 
-        // 23시 이후 출생은 다음 날의 일주를 씁니다.
-        let dDate = new Date(Date.UTC(b.y, b.m - 1, b.d));
+        // 23시 이후 출생은 다음 날의 일주를 씁니다. (보정한 시각 기준)
+        let dDate = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()));
         if (hasTime && hour >= 23) dDate = new Date(dDate.getTime() + 86400000);
         const dN = dayIndex(dDate.getUTCFullYear(), dDate.getUTCMonth() + 1, dDate.getUTCDate());
         const day = pillarOf(dN);
@@ -107,7 +198,8 @@ const Saju = (() => {
             hour: hourP,
             pillarYear: year,
             jd,
-            hasTime
+            hasTime,
+            correction
         };
     }
 
@@ -208,7 +300,7 @@ const Saju = (() => {
 
     return {
         EL, EL_KOR, EL_HANJA, STEMS, BRANCHES,
-        calc, pillarOf, sexagenary, dayIndex, sunLongitude, julianDay,
+        PLACES, PLACE_MAP, calc, pillarOf, sexagenary, dayIndex, sunLongitude, julianDay,
         tenGod, tenGodOfBranch, elementRelation, stemCombine, branchRelation,
         elementCounts, weakestElement, strongestElement, daewoon, todayPillars
     };

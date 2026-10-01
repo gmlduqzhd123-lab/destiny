@@ -115,12 +115,14 @@ const App = (() => {
         const gender = $('gender').value;
         const mbti = $('mbti').value;
         const time = $('birthTime').value;
+        const place = $('birthPlace').value;
         if (!name) return { error: '이름을 입력해 주세요.' };
         const b = resolveBirth($('birthDate').value, mainCal());
         if (b.error) return b;
         if (!gender) return { error: '성별을 골라 주세요.' };
         if (!mbti) return { error: 'MBTI 네 칸을 모두 골라 주세요. 모르면 "잘 모르겠어요"를 눌러 보세요.' };
         const user = { name, birth: b.ymd, time, gender, mbti };
+        if (time && place !== 'none') user.place = place;
         if (b.lunar) Object.assign(user, { cal: 'lunar', lunar: b.lunar, leap: b.leap });
         return { user };
     }
@@ -188,7 +190,43 @@ const App = (() => {
         setGender(u.gender);
         setMbti(u.mbti);
         $('birthTime').value = u.time || '';
+        // 지역 없이 시간만 저장된 예전 기록은 '보정 안 함'으로 두어 결과가 바뀌지 않게 합니다.
+        $('birthPlace').value = u.place || (u.time ? 'none' : 'seoul');
         $('timeMore').open = !!u.time;
+        timePreview();
+    }
+
+    // ---------- 태어난 시간 · 지역 보정 ----------
+    function fillPlaces() {
+        $('birthPlace').innerHTML = Saju.PLACES.map(g =>
+            `<optgroup label="${g.group}">${g.list.map(([id, name]) => `<option value="${id}">${name}</option>`).join('')}</optgroup>`
+        ).join('') + '<optgroup label="기타"><option value="none">해외·모름 (보정 안 함)</option></optgroup>';
+        $('birthPlace').value = 'seoul';
+    }
+
+    function correctionText(c, placeName) {
+        if (!c) return '';
+        if (c.lmt) return `1908년 이전은 그 지역 시각을 그대로 써서 보정하지 않아요.`;
+        const sign = c.diffMin > 0 ? '+' : '−';
+        const notes = [];
+        if (c.dst) notes.push('당시 서머타임 1시간 반영');
+        if (c.offset === 510 || c.offset === 570) notes.push('당시 표준시 UTC+8:30 반영');
+        if (c.dayShift < 0) notes.push('보정하면 전날 밤이에요');
+        return `${placeName} 기준 실제 태양시 ${c.solar} (${sign}${Math.abs(c.diffMin)}분)` + (notes.length ? ` · ${notes.join(' · ')}` : '');
+    }
+
+    function timePreview() {
+        const note = $('timePreview');
+        const time = $('birthTime').value, placeId = $('birthPlace').value;
+        const b = resolveBirth($('birthDate').value, mainCal());
+        if (!time || placeId === 'none' || b.error) {
+            note.textContent = time && placeId === 'none' ? `입력한 ${time} 그대로 계산해요.` : '';
+            return;
+        }
+        const place = Saju.PLACE_MAP[placeId];
+        const [hh, mm] = time.split(':').map(Number);
+        const r = Saju.calc({ y: b.y, m: b.m, d: b.d, hour: hh, minute: mm, lon: place.lon });
+        note.textContent = '✓ ' + correctionText(r.correction, place.name);
     }
 
     // ---------- 입력 전 첫 화면 ----------
@@ -230,7 +268,9 @@ const App = (() => {
         $('whoName').textContent = `${u.name} 님`;
         const y = state.profile.saju.year;
         const bl = u.cal === 'lunar' ? `${birthLabel(u)} (양력 ${formatBirth(u.birth)})` : formatBirth(u.birth);
-        $('whoMeta').textContent = `${bl}${u.time ? ' ' + u.time : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
+        const placeInfo = u.time && Saju.PLACE_MAP[u.place];
+        const pl = placeInfo ? ' ' + placeInfo.name.split('·')[0] : '';
+        $('whoMeta').textContent = `${bl}${u.time ? ' ' + u.time + pl : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
         document.querySelectorAll('#toneToggle button').forEach(b => b.classList.toggle('on', b.dataset.tone === state.tone));
     }
 
@@ -437,8 +477,13 @@ const App = (() => {
             </div>`;
         }).join('');
         $('sajuSub').textContent = sj.hasTime ? '8글자' : '6글자 (시간 모름)';
-        $('sajuNote').textContent = sj.hasTime ? '' : '태어난 시간을 입력하면 시주까지 계산해 8글자를 모두 볼 수 있습니다.';
-        $('sajuNote').style.display = sj.hasTime ? 'none' : 'block';
+        const u = state.user;
+        let note = '';
+        if (!sj.hasTime) note = '태어난 시간을 입력하면 시주까지 계산해 8글자를 모두 볼 수 있습니다.';
+        else if (sj.correction) note = `출생 ${sj.correction.wall} → ${correctionText(sj.correction, Saju.PLACE_MAP[u.place].name)}. 시주는 보정한 시각으로 정했습니다.`;
+        else note = `출생 ${u.time}을 그대로 계산했습니다. 태어난 지역을 고르면 실제 태양 시각으로 보정할 수 있어요.`;
+        $('sajuNote').textContent = note;
+        $('sajuNote').style.display = note ? 'block' : 'none';
 
         $('ilganHanja').className = 'ilgan-hanja ' + EL_CLASS(me.el);
         $('ilganHanja').textContent = me.hanja;
@@ -696,8 +741,11 @@ const App = (() => {
             const n = normalizeBirth(e.target.value);
             if (n) e.target.value = formatBirth(n);
         });
-        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.addEventListener('click', () => setCal(b.dataset.v)));
-        $('leapMonth').addEventListener('change', () => birthPreview($('birthDate'), $('birthPreview'), mainCal()));
+        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.addEventListener('click', () => { setCal(b.dataset.v); timePreview(); }));
+        $('leapMonth').addEventListener('change', () => { birthPreview($('birthDate'), $('birthPreview'), mainCal()); timePreview(); });
+        ['birthTime', 'birthPlace'].forEach(id => $(id).addEventListener('input', timePreview));
+        $('birthPlace').addEventListener('change', timePreview);
+        $('birthDate').addEventListener('input', timePreview);
         document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.addEventListener('click', () => setGender(b.dataset.v)));
         document.querySelectorAll('#mbtiPick .seg button').forEach(b => b.addEventListener('click', () => {
             b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -774,6 +822,7 @@ const App = (() => {
         Journal.init(ok => toast(ok ? '오늘의 기록을 저장했습니다.' : '이 환경에서는 기록을 저장할 수 없습니다.'));
         $('pMbti').innerHTML = '<option value="">MBTI 모름</option>' + MBTI_TYPES.map(t => `<option>${t}</option>`).join('');
         renderTeaser();
+        fillPlaces();
 
         const inv = Compat.readInvite(location.search);
         if (inv && !parseBirth(inv.birth).error) {
