@@ -1,6 +1,6 @@
 // 명운 (命運) - 사주·궁합·타로 서비스 워커: 앱 설치(홈 화면에 추가)와 오프라인 열기를 돕는다.
 // 파일을 바꿔도 새 버전을 먼저 받아 오므로 보통은 CACHE_VERSION을 올릴 필요가 없다.
-const CACHE_VERSION = 'destiny-v3';
+const CACHE_VERSION = 'destiny-v4';
 // 같은 주소(gmlduqzhd123-lab.github.io)의 다른 앱들과 저장소를 함께 쓰므로, 이 앱의 이전 캐시만 지운다.
 const CACHE_PREFIX = 'destiny-v';
 const APP_SHELL = [
