@@ -53,6 +53,7 @@ js/data/*.js        풀이 문장 데이터
 
 ## 사용한 라이브러리
 
+- [Pretendard](https://github.com/orioncactus/pretendard) v1.3.9 (SIL Open Font License 1.1, © 2021 Kil Hyung-jin) — 본문 글꼴. `fonts/pretendard/`에 라이선스와 함께 포함(글자 묶음별로 나뉜 가변 글꼴이라 필요한 조각만 내려받음).
 - [korean-lunar-calendar](https://github.com/usingsky/korean_lunar_calendar_js) v0.4.0 (MIT License, © 2022 Jinil Lee) — 음력 ↔ 양력 변환. `js/vendor/`에 라이선스와 함께 포함.
 
 ## 저작권
