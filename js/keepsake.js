@@ -6,7 +6,7 @@ const Keepsake = (() => {
     const W = 1080, H = 1920;
     const INK = '#2b2420', SEAL = '#b3261e', PAPER = '#efe6d2';
     const SERIF = '"Gowun Batang", "Nanum Myeongjo", serif';
-    const SANS = 'Pretendard, sans-serif';
+    const SANS = '"Pretendard Variable", Pretendard, sans-serif';
     const EL_COLOR = { wood: '#3f7d52', fire: '#b8432c', earth: '#9a7431', metal: '#6c6f75', water: '#2f5d95' };
 
     let canvas, ctx, data = null, stamps = [], selectedSeal = null, paperTexture = null;
@@ -223,11 +223,14 @@ const Keepsake = (() => {
     async function render(newData) {
         data = newData;
         stamps = [];
+        // 글꼴이 글자 묶음별로 나뉘어 있어, 카드에 그릴 글자를 넘겨 필요한 조각만 미리 받습니다.
+        const sample = JSON.stringify(newData) + '0123456789연애금전직장재미로보는운세';
         try {
             await Promise.all([
-                document.fonts.load(`700 40px "Gowun Batang"`),
-                document.fonts.load(`400 40px "Gowun Batang"`),
-                document.fonts.load(`700 40px Pretendard`)
+                document.fonts.load(`700 40px "Gowun Batang"`, sample),
+                document.fonts.load(`400 40px "Gowun Batang"`, sample),
+                document.fonts.load(`400 40px "Pretendard Variable"`, sample),
+                document.fonts.load(`700 40px "Pretendard Variable"`, sample)
             ]);
         } catch (e) { /* 폰트를 못 불러와도 기본 폰트로 그립니다 */ }
         draw();

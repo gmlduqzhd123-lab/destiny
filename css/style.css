@@ -20,7 +20,7 @@
     --metal: #cfd3d8;
     --water: #5b8fd0;
     --serif: 'Gowun Batang', 'Nanum Myeongjo', serif;
-    --sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    --sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; }
