@@ -2,6 +2,17 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <script>
+    // Legacy invitation values are never decoded, displayed, or saved.
+    // Run before resource loads; the initial navigation may already have reached the host.
+    (function () {
+        window.destinyLegacyInvite = new URLSearchParams(location.search).has('invite');
+        if (window.destinyLegacyInvite) {
+            try { history.replaceState(null, '', location.pathname); } catch (e) { /* Referrer policy still protects subrequests. */ }
+        }
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0b1120">
     <meta name="author" content="엽쌤">
@@ -352,10 +363,10 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title" id="compatInviteTitle">우정 케미 초대 링크</h3>
-                <p class="small" id="compatInviteDesc" style="margin-top:0;">링크를 받은 친구가 자기 정보만 입력하면 바로 두 사람의 우정 케미를 확인할 수 있어요.</p>
-                <button type="button" class="btn btn-ghost" id="btnInvite">내 케미 링크 보내기</button>
-                <p class="small muted" style="margin:10px 0 0;">링크에는 내 이름, 생년월일, 성별, MBTI가 담깁니다. 친한 친구에게만 보내 주세요.</p>
+                <h3 class="card-title" id="compatInviteTitle">별빛 나침반 앱 초대</h3>
+                <p class="small" id="compatInviteDesc" style="margin-top:0;">개인정보 없이 앱 주소만 보냅니다. 두 사람의 케미는 서로 동의한 정보를 이 기기에서 직접 입력해 확인해 주세요.</p>
+                <button type="button" class="btn btn-ghost" id="btnInvite">앱 초대 링크 보내기</button>
+                <p class="small muted" style="margin:10px 0 0;">초대 링크에는 이름, 생년월일, 성별, MBTI가 포함되지 않으며 상대 정보가 자동으로 입력되지 않습니다.</p>
             </div>
         </div>
 

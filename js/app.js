@@ -36,7 +36,6 @@ const App = (() => {
         profile: null,
         today: null,
         tab: 'today',
-        invite: null,
         compat: null
     };
 
@@ -337,10 +336,8 @@ const App = (() => {
         $('pName').placeholder = teacher ? '상대(또는 짝꿍 학생) 이름' : '친구(짝꿍) 이름';
         $('btnCompatSubmit').textContent = teacher ? '관계 · 모둠 케미 분석하기' : '우정 케미 확인하기';
         $('compatResultTitle').textContent = teacher ? '두 사람의 관계 · 협동 시너지' : '두 사람의 우정 케미';
-        $('compatInviteTitle').textContent = teacher ? '케미 분석 초대 링크' : '우정 케미 초대 링크';
-        $('compatInviteDesc').textContent = teacher
-            ? '링크를 받은 사람이 자기 정보만 입력하면 바로 두 사람의 케미 분석을 볼 수 있습니다.'
-            : '링크를 받은 친구가 자기 정보만 입력하면 바로 두 사람의 우정 케미를 확인할 수 있어요.';
+        $('compatInviteTitle').textContent = '별빛 나침반 앱 초대';
+        $('compatInviteDesc').textContent = '개인정보 없이 앱 주소만 보냅니다. 두 사람의 케미는 서로 동의한 정보를 이 기기에서 직접 입력해 확인해 주세요.';
 
         $('tarotTitleText').textContent = teacher ? '교단 힐링 타로' : '상징 이야기 · 마음 카드';
         $('tarotSubText').textContent = teacher ? '오늘의 영감과 마인드셋' : '이야기 짓기 · 고민 나누기';
@@ -858,16 +855,7 @@ const App = (() => {
         $('reframeText').style.display = 'none';
         $('btnReframe').style.display = '';
         renderAll();
-        if (state.invite) {
-            fillPartner(state.invite);
-            runCompat(state.invite);
-            state.invite = null;
-            $('inviteBanner').style.display = 'none';
-            history.replaceState(null, '', appUrl());
-            switchTab('compat');
-        } else {
-            switchTab('today');
-        }
+        switchTab('today');
     }
 
     function showInput() {
@@ -1013,11 +1001,10 @@ const App = (() => {
         $('pBirth').addEventListener('input', pPreview);
         $('pCal').addEventListener('change', pPreview);
         $('btnInvite').addEventListener('click', () => {
-            const u = state.user;
             shareOrCopy(
-                '별빛 나침반 우정 케미 초대',
-                `${u.name} 님이 별빛 나침반에서 우정 케미를 맞춰 보자고 초대했어요! 내 정보만 입력하면 두 사람의 케미가 바로 나옵니다.`,
-                Compat.inviteUrl(u, appUrl())
+                '별빛 나침반 앱 초대',
+                '별빛 나침반에서 기질 도감과 마음 카드를 만나 보세요. 이 초대에는 개인정보가 포함되지 않습니다.',
+                Compat.inviteUrl(appUrl())
             );
         });
         $('btnShareCompat').addEventListener('click', () => {
@@ -1041,10 +1028,8 @@ const App = (() => {
         const savedMode = store.get(STORE_MODE);
         setMode(savedMode === 'teacher' ? 'teacher' : 'student');
 
-        const inv = Compat.readInvite(location.search);
-        if (inv && !parseBirth(inv.birth).error) {
-            state.invite = inv;
-            $('inviteBanner').innerHTML = `<b>${escapeHtml(inv.name)}</b> 님이 우정 케미를 맞춰 보자고 초대했어요!<br>내 정보를 입력하면 두 사람의 케미를 바로 볼 수 있습니다.`;
+        if (window.destinyLegacyInvite) {
+            $('inviteBanner').textContent = '개인정보 보호를 위해 이전 초대 링크의 정보는 불러오지 않습니다. 두 사람의 케미는 서로 동의한 정보를 직접 입력해 확인해 주세요.';
             $('inviteBanner').style.display = 'block';
         }
         const saved = store.get(STORE_USER);

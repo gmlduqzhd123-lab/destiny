@@ -1,6 +1,6 @@
 /**
  * [Compat] 우정 케미 · 관계 조화 — 대표 자연물 오행(30) + 속마음 자리·일지(20) + 띠(20) + MBTI(30) = 100점
- * 초대 링크: ?invite=<base64url(JSON)> 로 상대가 내 정보를 입력 없이 불러와 케미를 봅니다.
+ * 초대 링크: 개인정보 없이 앱 주소만 공유합니다. 두 사람의 정보는 기기에서 직접 입력합니다.
  */
 const Compat = (() => {
     const BRANCH_SCORE = { yukhap: 20, samhap: 18, same: 14, none: 13, wonjin: 8, chung: 6 };
@@ -151,35 +151,11 @@ const Compat = (() => {
         return { a, b, parts, total, grade, teamTip };
     }
 
-    // ---------- 초대 링크 ----------
-    function encode(obj) {
-        const bytes = new TextEncoder().encode(JSON.stringify(obj));
-        let bin = '';
-        bytes.forEach(x => { bin += String.fromCharCode(x); });
-        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // 개인정보나 기존 쿼리·해시를 초대 링크에 포함하지 않습니다.
+    function inviteUrl(baseUrl) {
+        const url = new URL(baseUrl);
+        return url.origin + url.pathname;
     }
 
-    function decode(str) {
-        try {
-            const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
-            const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-            return JSON.parse(new TextDecoder().decode(bytes));
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function inviteUrl(user, baseUrl) {
-        return `${baseUrl}?invite=${encode({ n: user.name, b: user.birth, g: user.gender, m: user.mbti })}`;
-    }
-
-    function readInvite(search) {
-        const raw = new URLSearchParams(search).get('invite');
-        if (!raw) return null;
-        const d = decode(raw);
-        if (!d || typeof d.n !== 'string' || !/^\d{8}$/.test(d.b) || !['M', 'F'].includes(d.g) || !/^[EI][SN][TF][JP]$/.test(d.m)) return null;
-        return { name: d.n.slice(0, 20), birth: d.b, time: '', gender: d.g, mbti: d.m };
-    }
-
-    return { compute, inviteUrl, readInvite };
+    return { compute, inviteUrl };
 })();
