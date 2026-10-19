@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0f0d0b">
+    <meta name="theme-color" content="#0b1120">
     <meta name="author" content="엽쌤">
     <meta name="copyright" content="© 2026 엽쌤. All rights reserved.">
-    <meta name="description" content="이름, 생년월일, 성별, MBTI로 보는 오늘의 운세와 타로">
-    <title>명운 (命運) - 사주·궁합·타로</title>
+    <meta name="description" content="이름, 생년월일, 성별, MBTI로 찾는 나의 별빛 기질과 우정 나침반 (학생용·선생님용)">
+    <title>별빛 나침반 - 기질 도감 · 우정 케미 · 마음 카드</title>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="엽쌤스쿨">
-    <meta property="og:title" content="명운 (命運) - 사주·궁합·타로">
-    <meta property="og:description" content="이름·생년월일·MBTI로 보는 사주·궁합·오늘의 운세와 타로">
+    <meta property="og:title" content="별빛 나침반 - 기질 도감 · 우정 케미 · 마음 카드">
+    <meta property="og:description" content="전통 책력과 MBTI로 알아보는 나의 자연물 기질, 우정 케미, 마음 카드 (학생용·선생님용)">
     <meta property="og:url" content="https://gmlduqzhd123-lab.github.io/destiny/">
     <meta property="og:locale" content="ko_KR">
     <meta property="og:image" content="https://gmlduqzhd123-lab.github.io/destiny/og-image.jpg">
@@ -19,7 +19,7 @@
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="명운 (命運) - 사주·궁합·타로">
+    <meta property="og:image:alt" content="별빛 나침반 - 기질 도감 · 우정 케미 · 마음 카드">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://gmlduqzhd123-lab.github.io/destiny/og-image.jpg">
 
@@ -34,19 +34,28 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="명운">
+    <meta name="apple-mobile-web-app-title" content="별빛 나침반">
     <script src="ys-install.js"></script>
     <style>.install-btn{display:none}html.can-install .install-btn{display:inline}.install-btn button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}</style>
 </head>
-<body>
+<body data-mode="student">
 
 <div class="container">
     <header class="brand">
-        <!-- 📲 앱 설치 · 📱 QR: 맨 윗줄 오른쪽 -->
-        <div class="brand-actions"><button type="button" class="brand-install" data-ys-install>📲 앱 설치</button><button type="button" class="brand-install" data-qr aria-label="QR 코드로 접속">📱 QR</button></div>
-        <div class="brand-seal">命</div>
-        <h1>명운<small>命運</small></h1>
-        <p>이름, 생년월일, 성별, MBTI로 보는 나의 운명</p>
+        <!-- 상단 바: 학생용/선생님용 테마 스위치 + 앱 설치·QR -->
+        <div class="top-bar">
+            <div class="mode-switch" id="modeSwitch" role="tablist" aria-label="테마 모드 선택">
+                <button type="button" data-mode="student" class="on" role="tab" aria-selected="true">🌱 학생용</button>
+                <button type="button" data-mode="teacher" role="tab" aria-selected="false">🏫 선생님용</button>
+            </div>
+            <div class="brand-actions">
+                <button type="button" class="brand-install" data-ys-install>📲 앱 설치</button>
+                <button type="button" class="brand-install" data-qr aria-label="QR 코드로 접속">📱 QR</button>
+            </div>
+        </div>
+        <div class="brand-seal" id="brandSeal">星</div>
+        <h1>별빛 나침반<small>星光</small></h1>
+        <p id="brandDesc">이름, 생년월일, 성별, MBTI로 찾는 나의 별빛 기질과 우정 나침반</p>
     </header>
 
     <!-- 입력 화면 -->
@@ -64,16 +73,16 @@
 
         <!-- 다시 온 사람은 한 번에 -->
         <div class="card welcome" id="welcomeCard" style="display:none;">
-            <p class="welcome-hi">다시 오셨네요, <b id="welcomeName"></b> 님</p>
+            <p class="welcome-hi">반가워요, <b id="welcomeName"></b> 님!</p>
             <p class="small muted" id="welcomeMeta" style="margin:4px 0 16px;"></p>
-            <button type="button" class="btn btn-gold" id="btnQuick">오늘의 운세 바로 보기</button>
-            <button type="button" class="link-btn" id="btnEditInfo">다른 정보로 보기</button>
+            <button type="button" class="btn btn-gold" id="btnQuick">오늘의 별빛 나침반 바로 보기</button>
+            <button type="button" class="link-btn" id="btnEditInfo">다른 사람 정보로 보기</button>
         </div>
 
         <form id="fortuneForm" novalidate>
             <div class="field">
-                <label class="cap" for="userName">이름</label>
-                <input type="text" id="userName" placeholder="예: 홍길동 (별명도 괜찮아요)" autocomplete="off" maxlength="20">
+                <label class="cap" for="userName" id="labelUserName">이름 (또는 별명)</label>
+                <input type="text" id="userName" placeholder="예: 김별빛 (별명도 괜찮아요)" autocomplete="off" maxlength="20">
             </div>
             <div class="field">
                 <label class="cap" for="birthDate">생년월일</label>
@@ -82,44 +91,44 @@
                     <button type="button" data-v="lunar">음력</button>
                 </div>
                 <input type="hidden" id="calType" value="solar">
-                <input type="text" id="birthDate" placeholder="예: 1998.01.01 또는 19980101" inputmode="numeric" maxlength="14" autocomplete="off">
+                <input type="text" id="birthDate" placeholder="예: 2015.05.05 또는 20150505" inputmode="numeric" maxlength="14" autocomplete="off">
                 <label class="check" id="leapWrap" style="display:none; margin:8px 0 0;"><input type="checkbox" id="leapMonth"> 윤달에 태어났어요</label>
                 <p class="field-note" id="birthPreview"></p>
             </div>
             <div class="field">
                 <span class="cap">성별</span>
                 <div class="seg" data-for="gender">
-                    <button type="button" data-v="F">여성</button>
-                    <button type="button" data-v="M">남성</button>
+                    <button type="button" data-v="F" id="btnGenderF">여자</button>
+                    <button type="button" data-v="M" id="btnGenderM">남자</button>
                 </div>
                 <input type="hidden" id="gender">
             </div>
             <div class="field">
-                <span class="cap">MBTI <button type="button" class="link-btn inline" id="btnMbtiQuiz">잘 모르겠어요</button></span>
+                <span class="cap">MBTI 성향 <button type="button" class="link-btn inline" id="btnMbtiQuiz">4문항으로 찾아보기</button></span>
                 <div class="mbti-pick" id="mbtiPick">
                     <div class="seg" data-axis="0"><button type="button" data-v="E">E <small>외향</small></button><button type="button" data-v="I">I <small>내향</small></button></div>
                     <div class="seg" data-axis="1"><button type="button" data-v="S">S <small>감각</small></button><button type="button" data-v="N">N <small>직관</small></button></div>
-                    <div class="seg" data-axis="2"><button type="button" data-v="T">T <small>사고</small></button><button type="button" data-v="F">F <small>감정</small></button></div>
-                    <div class="seg" data-axis="3"><button type="button" data-v="J">J <small>계획</small></button><button type="button" data-v="P">P <small>즉흥</small></button></div>
+                    <div class="seg" data-axis="2"><button type="button" data-v="T">T <small>사고</small></button><button type="button" data-v="F">F <small>공감</small></button></div>
+                    <div class="seg" data-axis="3"><button type="button" data-v="J">J <small>계획</small></button><button type="button" data-v="P">P <small>유연</small></button></div>
                 </div>
                 <div class="mbti-quiz" id="mbtiQuiz" style="display:none;"></div>
                 <p class="field-note" id="mbtiPreview"></p>
                 <input type="hidden" id="mbti">
             </div>
             <details class="more" id="timeMore">
-                <summary>태어난 시간 추가하기 <span class="muted">(선택)</span></summary>
+                <summary>태어난 시간·지역 추가하기 <span class="muted">(선택 · 과학 보정)</span></summary>
                 <div class="more-body">
                     <div class="flex-row">
                         <input type="time" id="birthTime" aria-label="태어난 시간">
                         <select id="birthPlace" aria-label="태어난 지역"></select>
                     </div>
                     <p class="field-note" id="timePreview"></p>
-                    <p class="hint" style="margin:8px 2px 0;">시간을 넣으면 사주 여덟 글자를 모두 볼 수 있어요. 모르면 비워 두세요. 태어난 지역의 경도, 당시 표준시·서머타임, 계절에 따른 균시차를 반영해 실제 태양 시각(진태양시)으로 바꿔 계산하며, 보정한 시각이 23시 이후면 다음 날 자시(子時)로 봅니다.</p>
+                    <p class="hint" style="margin:8px 2px 0;">시간을 넣으면 여덟 글자를 모두 볼 수 있어요. 모르면 비워 두세요. 태어난 지역의 경도와 계절별 균시차를 반영해 실제 해의 위치(진태양시)로 정확히 계산합니다.</p>
                 </div>
             </details>
             <label class="check"><input type="checkbox" id="rememberMe" checked> 다음에도 바로 볼 수 있게 기억하기 (이 기기에만 저장)</label>
             <p class="form-error" id="formError"></p>
-            <button type="submit" class="btn btn-gold">운명의 흐름 읽기</button>
+            <button type="submit" class="btn btn-gold" id="btnSubmit">나의 별빛 나침반 열기</button>
         </form>
     </section>
 
@@ -131,21 +140,21 @@
                 <div class="who-meta" id="whoMeta"></div>
             </div>
             <div class="tone-toggle" id="toneToggle">
-                <button type="button" data-tone="gentle">다정한 풀이</button>
-                <button type="button" data-tone="direct">직설 풀이</button>
+                <button type="button" data-tone="gentle" id="btnToneGentle">다정한 말투</button>
+                <button type="button" data-tone="direct" id="btnToneDirect">솔직한 말투</button>
             </div>
         </div>
 
         <!-- ① 오늘 -->
         <div class="tab-panel" data-panel="today">
             <div class="card omikuji" id="omikuji">
-                <h3 class="card-title">오늘의 점괘 <button type="button" class="qm" data-term="omikuji" aria-label="용어 풀이">?</button></h3>
+                <h3 class="card-title"><span id="omiTitleText">오늘의 별빛 뽑기</span> <button type="button" class="qm" data-term="omikuji" aria-label="용어 풀이">?</button></h3>
                 <div class="omi-stage" id="omiStage">
-                    <button type="button" class="omi-cup" id="omiCup" aria-label="점통 흔들기">
+                    <button type="button" class="omi-cup" id="omiCup" aria-label="별빛 통 흔들기">
                         <span class="omi-sticks"><i></i><i></i><i></i><i></i><i></i></span>
-                        <span class="omi-body">運</span>
+                        <span class="omi-body" id="omiBodyChar">星</span>
                     </button>
-                    <p class="omi-guide">점통을 눌러 오늘의 점괘를 뽑아 보세요</p>
+                    <p class="omi-guide" id="omiGuideText">별빛 통을 눌러 오늘의 기운을 뽑아 보세요</p>
                 </div>
                 <div class="omi-result" id="omiResult" style="display:none;">
                     <div class="omi-stick"><span id="omiHanja"></span></div>
@@ -156,7 +165,7 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title"><span>오늘의 총평 <button type="button" class="qm" data-term="sipsin" aria-label="용어 풀이">?</button></span><span class="sub" id="todayDate"></span></h3>
+                <h3 class="card-title"><span><span id="todaySummaryTitle">오늘의 별빛 나침반</span> <button type="button" class="qm" data-term="sipsin" aria-label="용어 풀이">?</button></span><span class="sub" id="todayDate"></span></h3>
                 <div class="day-head">
                     <div class="hanja" id="dayHanja"></div>
                     <div class="name" id="dayName"></div>
@@ -166,26 +175,26 @@
                 <p class="lead" id="todayText"></p>
                 <p class="small muted" id="todayRelation" style="margin:12px 0 0;"></p>
                 <div class="reframe" id="reframeWrap" style="display:none;">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btnReframe">전화위복(轉禍爲福) 풀이 보기</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnReframe">✨ 전화위복(긍정 바꾸기) 풀이 보기</button>
                     <div class="reframe-text" id="reframeText"></div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 class="card-title">테마별 운세</h3>
+                <h3 class="card-title" id="themeCardTitle">오늘의 세 가지 별빛 지수</h3>
                 <div class="theme-list">
                     <div class="theme-box love">
-                        <div class="theme-head">연애 · 애정운 <span class="score" id="scoreLove"></span></div>
+                        <div class="theme-head"><span id="labelLove">교우 · 우정운</span> <span class="score" id="scoreLove"></span></div>
                         <div class="bar"><i id="barLove"></i></div>
                         <div class="theme-text" id="textLove"></div>
                     </div>
                     <div class="theme-box money">
-                        <div class="theme-head">금전 · 재물운 <span class="score" id="scoreMoney"></span></div>
+                        <div class="theme-head"><span id="labelMoney">탐구 · 창의운</span> <span class="score" id="scoreMoney"></span></div>
                         <div class="bar"><i id="barMoney"></i></div>
                         <div class="theme-text" id="textMoney"></div>
                     </div>
                     <div class="theme-box work">
-                        <div class="theme-head">직장 · 사업운 <span class="score" id="scoreWork"></span></div>
+                        <div class="theme-head"><span id="labelWork">배움 · 집중운</span> <span class="score" id="scoreWork"></span></div>
                         <div class="bar"><i id="barWork"></i></div>
                         <div class="theme-text" id="textWork"></div>
                     </div>
@@ -193,34 +202,28 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title">성향 맞춤 조언</h3>
+                <h3 class="card-title" id="adviceCardTitle">MBTI 맞춤 조언과 오늘의 다짐</h3>
                 <div class="mbti-box"><span class="mbti-badge" id="mbtiBadge"></span><span id="mbtiAdvice"></span></div>
-                <div class="mission"><b>오늘의 실천</b> · <span id="missionText"></span></div>
+                <div class="mission"><b id="missionLabel">오늘의 작은 실천</b> · <span id="missionText"></span></div>
             </div>
 
             <div class="card">
-                <h3 class="card-title"><span>개운(開運) 요소 <button type="button" class="qm" data-term="gaewun" aria-label="용어 풀이">?</button></span><span class="sub" id="gaewunSub"></span></h3>
+                <h3 class="card-title"><span><span id="gaewunTitleText">행운을 부르는 별빛 아이템</span> <button type="button" class="qm" data-term="gaewun" aria-label="용어 풀이">?</button></span><span class="sub" id="gaewunSub"></span></h3>
                 <div class="gaewun" id="gaewunGrid"></div>
             </div>
 
             <div class="card quote">
-                <h3 class="card-title">오늘의 고전 한 구절</h3>
+                <h3 class="card-title" id="quoteCardTitle">오늘의 고전 명언 한 구절</h3>
                 <div class="hanmun" id="quoteHanmun"></div>
                 <div class="src" id="quoteSrc"></div>
                 <div class="kor" id="quoteKor"></div>
+                <div class="quote-tip" id="quoteTip"></div>
             </div>
 
             <div class="card keepsake-wrap">
-                <h3 class="card-title">명운첩 만들기 <span class="sub">도장을 골라 카드에 찍어 보세요</span></h3>
-                <canvas id="keepsakeCanvas" aria-label="명운첩 카드 미리보기"></canvas>
-                <div class="seal-palette" id="sealPalette">
-                    <button type="button" class="seal-btn" data-seal="福">福</button>
-                    <button type="button" class="seal-btn" data-seal="吉">吉</button>
-                    <button type="button" class="seal-btn" data-seal="合">合</button>
-                    <button type="button" class="seal-btn" data-seal="壽">壽</button>
-                    <button type="button" class="seal-btn" data-seal="財">財</button>
-                    <button type="button" class="seal-btn" data-seal="愛">愛</button>
-                </div>
+                <h3 class="card-title"><span id="keepsakeTitleText">별빛 도감 카드 만들기</span> <span class="sub">도장을 골라 카드에 찍어 보세요</span></h3>
+                <canvas id="keepsakeCanvas" aria-label="별빛 도감 카드 미리보기"></canvas>
+                <div class="seal-palette" id="sealPalette"></div>
                 <div class="btn-row" style="margin-bottom:10px;">
                     <button type="button" class="btn btn-ghost btn-sm" id="btnClearSeals">도장 지우기</button>
                 </div>
@@ -231,16 +234,16 @@
             </div>
         </div>
 
-        <!-- ② 사주 -->
+        <!-- ② 기질 / 사주 -->
         <div class="tab-panel" data-panel="saju">
             <div class="card">
-                <h3 class="card-title"><span>사주 원국(原局) <button type="button" class="qm" data-term="wonguk" aria-label="용어 풀이">?</button></span><span class="sub" id="sajuSub"></span></h3>
+                <h3 class="card-title"><span><span id="sajuTitleText">나의 시간 암호 (네 기둥)</span> <button type="button" class="qm" data-term="wonguk" aria-label="용어 풀이">?</button></span><span class="sub" id="sajuSub"></span></h3>
                 <div class="pillars" id="pillarGrid"></div>
                 <p class="small muted" id="sajuNote" style="margin:10px 0 0;"></p>
             </div>
 
             <div class="card">
-                <h3 class="card-title"><span>나를 상징하는 글자 <button type="button" class="qm" data-term="ilgan" aria-label="용어 풀이">?</button></span></h3>
+                <h3 class="card-title"><span><span id="ilganCardTitle">나를 상징하는 자연물 캐릭터</span> <button type="button" class="qm" data-term="ilgan" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ilgan">
                     <div class="ilgan-hanja" id="ilganHanja"></div>
                     <div>
@@ -249,12 +252,18 @@
                     </div>
                 </div>
                 <p class="lead" id="ilganTrait" style="font-size:0.95rem;"></p>
-                <p class="small" style="margin:10px 0 0;"><b style="color:var(--gold);">강점</b> · <span id="ilganStrength"></span></p>
-                <p class="small" style="margin:4px 0 0;"><b style="color:#ff8b7b;">주의</b> · <span id="ilganCaution"></span></p>
+                <p class="small" style="margin:10px 0 0;"><b style="color:var(--gold);">나의 강점</b> · <span id="ilganStrength"></span></p>
+                <p class="small" style="margin:4px 0 0;"><b style="color:#ff8b7b;" id="ilganCautionLabel">더 자라날 점</b> · <span id="ilganCaution"></span></p>
+            </div>
+
+            <!-- 🏫 선생님용 전용: 학생 이해 & 상담·칭찬 처방전 -->
+            <div class="card teacher-only" id="teacherCoachCard">
+                <h3 class="card-title"><span>🏫 교사용 학생 이해 · 상담 처방전</span><span class="sub">학급경영·생활지도</span></h3>
+                <div class="coach-list" id="coachList"></div>
             </div>
 
             <div class="card">
-                <h3 class="card-title"><span>오행 밸런스 <button type="button" class="qm" data-term="ohaeng" aria-label="용어 풀이">?</button></span></h3>
+                <h3 class="card-title"><span>다섯 가지 자연 기운 (오행 밸런스) <button type="button" class="qm" data-term="ohaeng" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ohaeng">
                     <svg id="ohaengSvg" viewBox="0 0 160 160" aria-label="오행 분포 오각형 그래프"></svg>
                     <div class="ohaeng-bars" id="ohaengBars"></div>
@@ -263,14 +272,14 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title">MBTI × 사주 <span class="sub">타고난 기질과 지금의 성격</span></h3>
+                <h3 class="card-title">MBTI × 자연물 기질 <span class="sub">타고난 기운과 지금의 성격</span></h3>
                 <div class="ilgan-title" id="crossName" style="color:var(--gold); margin-bottom:6px;"></div>
                 <p class="lead" id="crossText" style="font-size:0.95rem;"></p>
                 <p class="small" id="crossJudge" style="margin:10px 0 0; line-height:1.7;"></p>
             </div>
 
             <div class="card">
-                <h3 class="card-title"><span>운의 흐름 <button type="button" class="qm" data-term="daewoon" aria-label="용어 풀이">?</button></span><span class="sub" id="dwSub"></span></h3>
+                <h3 class="card-title"><span>시간과 계절의 흐름 <button type="button" class="qm" data-term="daewoon" aria-label="용어 풀이">?</button></span><span class="sub" id="dwSub"></span></h3>
                 <div class="daewoon" id="dwList"></div>
                 <p class="small" id="dwNow" style="margin:10px 0 14px; line-height:1.7;"></p>
                 <div class="gh-item">
@@ -283,67 +292,79 @@
                 </div>
             </div>
 
+            <!-- 🏫 선생님용 전용: 사회·과학·수학 수업용 전통 책력 원리 -->
+            <div class="card teacher-only" id="teacherEduCard">
+                <h3 class="card-title"><span>📚 수업용 전통 책력 원리 설명</span><span class="sub">사회·과학·수학 연계</span></h3>
+                <div class="edu-tabs" id="eduTabs">
+                    <button type="button" data-edu="lunar" class="on">음력·24절기</button>
+                    <button type="button" data-edu="gapja">60갑자·최소공배수</button>
+                    <button type="button" data-edu="solar">경도·진태양시</button>
+                </div>
+                <div class="edu-body" id="eduBody"></div>
+            </div>
+
             <div class="card">
-                <h3 class="card-title">나에게 맞는 부적</h3>
+                <h3 class="card-title" id="amuletTitleText">나를 응원하는 별빛 부적</h3>
                 <div class="amulet" id="amuletBox"></div>
                 <p class="small muted center" id="amuletNote" style="margin:12px 0 0;"></p>
             </div>
         </div>
 
-        <!-- ③ 궁합 -->
+        <!-- ③ 우정 케미 / 관계·모둠 -->
         <div class="tab-panel" data-panel="compat">
             <div class="card" id="compatFormCard">
-                <h3 class="card-title">궁합 보기 <span class="sub">상대의 정보를 입력해 주세요</span></h3>
+                <h3 class="card-title"><span id="compatFormTitle">짝꿍 · 모둠 우정 케미 보기</span> <span class="sub" id="compatFormSub">친구의 정보를 입력해 주세요</span></h3>
                 <form id="compatForm" novalidate>
-                    <div class="field"><input type="text" id="pName" placeholder="상대 이름" autocomplete="off" maxlength="20"></div>
+                    <div class="field"><input type="text" id="pName" placeholder="친구(상대) 이름" autocomplete="off" maxlength="20"></div>
                     <div class="flex-row field">
                         <select id="pCal" style="flex:0 0 96px;" aria-label="상대 생일 달력">
                             <option value="solar">양력</option>
                             <option value="lunar">음력</option>
                             <option value="leap">음력 윤달</option>
                         </select>
-                        <input type="text" id="pBirth" placeholder="상대 생년월일 (예: 1998.01.01)" inputmode="numeric" maxlength="14" autocomplete="off">
+                        <input type="text" id="pBirth" placeholder="생년월일 (예: 2015.05.05)" inputmode="numeric" maxlength="14" autocomplete="off">
                     </div>
                     <p class="field-note" id="pBirthPreview" style="margin:-6px 2px 10px;"></p>
                     <div class="flex-row field">
                         <select id="pGender">
                             <option value="" disabled selected>성별</option>
-                            <option value="M">남성</option>
-                            <option value="F">여성</option>
+                            <option value="M" id="optPGenderM">남자</option>
+                            <option value="F" id="optPGenderF">여자</option>
                         </select>
                         <select id="pMbti"></select>
                     </div>
                     <p class="form-error" id="compatError"></p>
-                    <button type="submit" class="btn btn-gold">궁합 보기</button>
+                    <button type="submit" class="btn btn-gold" id="btnCompatSubmit">우정 케미 확인하기</button>
                 </form>
             </div>
 
             <div class="card" id="compatResult" style="display:none;">
-                <h3 class="card-title"><span>두 사람의 궁합 <button type="button" class="qm" data-term="compat" aria-label="용어 풀이">?</button></span></h3>
+                <h3 class="card-title"><span><span id="compatResultTitle">두 사람의 우정 케미</span> <button type="button" class="qm" data-term="compat" aria-label="용어 풀이">?</button></span></h3>
                 <div class="gh-pair" id="ghPair"></div>
                 <div class="gh-score">
                     <div class="num" id="ghTotal"></div>
                     <div class="grade" id="ghGrade"></div>
                 </div>
                 <p class="lead" id="ghSummary" style="font-size:0.95rem; margin-bottom:14px;"></p>
+                <div class="coach-item" id="compatTeamTip" style="margin-bottom:12px;"></div>
                 <div id="ghParts"></div>
-                <button type="button" class="btn btn-kakao" id="btnShareCompat" style="margin-top:6px;">궁합 결과 공유하기</button>
+                <button type="button" class="btn btn-kakao" id="btnShareCompat" style="margin-top:6px;">케미 결과 공유하기</button>
             </div>
 
             <div class="card">
-                <h3 class="card-title">궁합 초대 링크</h3>
-                <p class="small" style="margin-top:0;">링크를 받은 사람이 자기 정보만 입력하면 바로 두 사람의 궁합을 볼 수 있습니다.</p>
-                <button type="button" class="btn btn-ghost" id="btnInvite">내 궁합 링크 보내기</button>
-                <p class="small muted" style="margin:10px 0 0;">링크에는 내 이름, 생년월일, 성별, MBTI가 담깁니다. 믿을 수 있는 사람에게만 보내 주세요.</p>
+                <h3 class="card-title" id="compatInviteTitle">우정 케미 초대 링크</h3>
+                <p class="small" id="compatInviteDesc" style="margin-top:0;">링크를 받은 친구가 자기 정보만 입력하면 바로 두 사람의 우정 케미를 확인할 수 있어요.</p>
+                <button type="button" class="btn btn-ghost" id="btnInvite">내 케미 링크 보내기</button>
+                <p class="small muted" style="margin:10px 0 0;">링크에는 내 이름, 생년월일, 성별, MBTI가 담깁니다. 친한 친구에게만 보내 주세요.</p>
             </div>
         </div>
 
-        <!-- ④ 타로 -->
+        <!-- ④ 상징 카드 / 힐링 타로 -->
         <div class="tab-panel" data-panel="tarot">
             <div class="card">
-                <h3 class="card-title">타로 리딩</h3>
+                <h3 class="card-title"><span id="tarotTitleText">상징 이야기 · 마음 카드</span> <span class="sub" id="tarotSubText">22장 메이저 상징 카드</span></h3>
                 <div class="spread-select" id="spreadSelect"></div>
-                <div class="field"><input type="text" id="tarotQuestion" placeholder="마음속 질문을 적어 보세요 (선택)" maxlength="60" autocomplete="off"></div>
+                <div class="field"><input type="text" id="tarotQuestion" placeholder="고민이나 지어 보고 싶은 이야기 주제를 적어 보세요 (선택)" maxlength="60" autocomplete="off"></div>
                 <div class="deck-guide" id="deckGuide"></div>
                 <div class="deck-fan" id="deckFan"></div>
                 <div class="tarot-slots" id="tarotSlots"></div>
@@ -352,14 +373,14 @@
             </div>
         </div>
 
-        <!-- ⑤ 기록 -->
+        <!-- ⑤ 마음 일기 / 교단 일지 -->
         <div class="tab-panel" data-panel="journal">
             <div class="card">
-                <h3 class="card-title">운세 일지</h3>
+                <h3 class="card-title" id="journalTitleText">별빛 마음 달력</h3>
                 <div class="streak">
                     <div><div class="v" id="jStreak"></div><div class="l">연속 방문</div></div>
                     <div><div class="v" id="jTotal"></div><div class="l">기록한 날</div></div>
-                    <div><div class="v" id="jGood"></div><div class="l">좋았던 날</div></div>
+                    <div><div class="v" id="jGood"></div><div class="l">기분 좋은 날</div></div>
                 </div>
                 <div class="cal-head">
                     <button type="button" id="calPrev" aria-label="이전 달">‹</button>
@@ -368,38 +389,38 @@
                 </div>
                 <div class="cal" id="calGrid"></div>
                 <div class="log-detail" id="logDetail"></div>
-                <p class="small muted center" style="margin:12px 0 0;">도장에는 그날의 십신이 새겨집니다. 기록은 이 기기에만 저장됩니다.</p>
+                <p class="small muted center" style="margin:12px 0 0;">달력 도장에는 그날의 별빛 기운이 새겨집니다. 기록은 이 기기에만 안전하게 저장됩니다.</p>
             </div>
 
             <div class="card memo-area">
-                <h3 class="card-title">오늘 실제로 어땠나요?</h3>
+                <h3 class="card-title" id="memoTitleText">오늘 하루 나의 마음 날씨는?</h3>
                 <div class="rating" id="ratingBtns">
-                    <button type="button" data-rating="good">좋았어요</button>
-                    <button type="button" data-rating="soso">보통이었어요</button>
-                    <button type="button" data-rating="bad">아쉬웠어요</button>
+                    <button type="button" data-rating="good">☀️ 신났어요</button>
+                    <button type="button" data-rating="soso">⛅ 평온했어요</button>
+                    <button type="button" data-rating="bad">🌧️ 토닥토닥</button>
                 </div>
-                <textarea id="memoText" maxlength="200" placeholder="오늘 있었던 일을 한 줄로 남겨 보세요."></textarea>
-                <button type="button" class="btn btn-gold" id="btnMemoSave">기록 저장</button>
+                <textarea id="memoText" maxlength="200" placeholder="오늘 고마웠던 일이나 내일의 다짐을 한 줄로 남겨 보세요."></textarea>
+                <button type="button" class="btn btn-gold" id="btnMemoSave">일기 저장하기</button>
             </div>
         </div>
 
-        <button type="button" class="btn btn-ghost" id="btnReset">다른 사람 운세 보기</button>
+        <button type="button" class="btn btn-ghost" id="btnReset">다른 사람 나침반 보기</button>
     </section>
 
     <!-- 공통 하단: 입력·결과 화면 모두 표시 -->
     <footer class="site-footer">
-        <p class="footer-note">명운은 재미로 보는 운세입니다. 중요한 결정은 스스로의 판단을 믿으세요.</p>
+        <p class="footer-note" id="footerNoteText">별빛 나침반은 나와 친구의 강점을 찾는 자기이해 도구입니다. 가장 중요한 나침반은 나의 선택과 마음가짐이에요!</p>
         <p class="footer-note copyright">© 2026 엽쌤. All rights reserved. · <a href="https://gmlduqzhd123-lab.github.io/YScode/">엽쌤의 다른 앱 보기 →</a><span class="install-btn"> · <button type="button">📲 앱 설치</button></span><span class="qr-btn"> · <button type="button" data-qr>📱 QR로 접속</button></span></p>
     </footer>
 </div>
 
 <nav class="tabbar" id="tabbar">
     <div class="tabbar-inner">
-        <button type="button" data-tab="today"><span class="ic">今</span>오늘</button>
-        <button type="button" data-tab="saju"><span class="ic">命</span>사주</button>
-        <button type="button" data-tab="compat"><span class="ic">緣</span>궁합</button>
-        <button type="button" data-tab="tarot"><span class="ic">星</span>타로</button>
-        <button type="button" data-tab="journal"><span class="ic">記</span>기록</button>
+        <button type="button" data-tab="today"><span class="ic">今</span><span id="tabLabelToday">오늘</span></button>
+        <button type="button" data-tab="saju"><span class="ic">星</span><span id="tabLabelSaju">기질</span></button>
+        <button type="button" data-tab="compat"><span class="ic">友</span><span id="tabLabelCompat">우정케미</span></button>
+        <button type="button" data-tab="tarot"><span class="ic">繪</span><span id="tabLabelTarot">상징카드</span></button>
+        <button type="button" data-tab="journal"><span class="ic">記</span><span id="tabLabelJournal">마음일기</span></button>
     </div>
 </nav>
 
@@ -453,7 +474,7 @@
         var last = document.activeElement;
         var back = document.createElement('div');
         back.className = 'yq-back';
-        back.style.setProperty('display', 'flex', 'important'); // 앱 CSS가 다른 창을 숨겨도 QR 창은 보이게
+        back.style.setProperty('display', 'flex', 'important');
         back.innerHTML = '<div class="yq-card" role="dialog" aria-modal="true" aria-labelledby="yq-title">' +
             '<p class="yq-title" id="yq-title">📱 카메라로 찍어서 들어와요</p><p class="yq-name"></p>' + svg +
             '<p class="yq-url"></p><p class="yq-hint">휴대폰·태블릿 카메라를 QR 코드에 비추면 바로 열려요.</p>' +
@@ -471,8 +492,8 @@
         document.body.appendChild(back);
         back.querySelector('.yq-close').focus();
     }
-        var QR_URL = "https://gmlduqzhd123-lab.github.io/destiny/", QR_NAME = "명운 (命運)";
-        var QR_SVG = "<svg class=\"yq-qr\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 41 41\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"명운 (命運) 주소 QR 코드\"><rect width=\"41\" height=\"41\" fill=\"#fff\"/><path fill=\"#000\" d=\"M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM20 4h1v1h-1zM22 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM17 5h1v1h-1zM18 5h1v1h-1zM22 5h1v1h-1zM23 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM21 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1zM20 7h1v1h-1zM21 7h1v1h-1zM23 7h1v1h-1zM25 7h1v1h-1zM26 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM13 8h1v1h-1zM15 8h1v1h-1zM17 8h1v1h-1zM20 8h1v1h-1zM21 8h1v1h-1zM23 8h1v1h-1zM26 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM17 9h1v1h-1zM19 9h1v1h-1zM24 9h1v1h-1zM27 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM21 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM19 12h1v1h-1zM21 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM5 13h1v1h-1zM7 13h1v1h-1zM8 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM21 13h1v1h-1zM22 13h1v1h-1zM24 13h1v1h-1zM25 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM4 14h1v1h-1zM5 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM13 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM18 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM24 14h1v1h-1zM27 14h1v1h-1zM29 14h1v1h-1zM33 14h1v1h-1zM35 14h1v1h-1zM4 15h1v1h-1zM5 15h1v1h-1zM6 15h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM15 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM23 15h1v1h-1zM26 15h1v1h-1zM27 15h1v1h-1zM28 15h1v1h-1zM35 15h1v1h-1zM5 16h1v1h-1zM7 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM20 16h1v1h-1zM23 16h1v1h-1zM26 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM31 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM35 16h1v1h-1zM4 17h1v1h-1zM5 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM14 17h1v1h-1zM17 17h1v1h-1zM18 17h1v1h-1zM22 17h1v1h-1zM23 17h1v1h-1zM24 17h1v1h-1zM25 17h1v1h-1zM28 17h1v1h-1zM29 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM5 18h1v1h-1zM7 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM14 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM19 18h1v1h-1zM21 18h1v1h-1zM24 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM28 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM4 19h1v1h-1zM5 19h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM8 19h1v1h-1zM11 19h1v1h-1zM13 19h1v1h-1zM18 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM21 19h1v1h-1zM22 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM28 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM33 19h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM14 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM23 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM27 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM4 21h1v1h-1zM9 21h1v1h-1zM12 21h1v1h-1zM13 21h1v1h-1zM16 21h1v1h-1zM17 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM22 21h1v1h-1zM24 21h1v1h-1zM27 21h1v1h-1zM29 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM16 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM30 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM9 23h1v1h-1zM11 23h1v1h-1zM12 23h1v1h-1zM15 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM23 23h1v1h-1zM25 23h1v1h-1zM27 23h1v1h-1zM28 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM36 23h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM7 24h1v1h-1zM9 24h1v1h-1zM10 24h1v1h-1zM15 24h1v1h-1zM19 24h1v1h-1zM22 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM27 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM31 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM9 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM20 25h1v1h-1zM23 25h1v1h-1zM25 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM28 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM14 26h1v1h-1zM15 26h1v1h-1zM20 26h1v1h-1zM23 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM29 26h1v1h-1zM32 26h1v1h-1zM34 26h1v1h-1zM35 26h1v1h-1zM6 27h1v1h-1zM7 27h1v1h-1zM13 27h1v1h-1zM14 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM21 27h1v1h-1zM23 27h1v1h-1zM24 27h1v1h-1zM25 27h1v1h-1zM26 27h1v1h-1zM27 27h1v1h-1zM29 27h1v1h-1zM30 27h1v1h-1zM32 27h1v1h-1zM35 27h1v1h-1zM36 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM14 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM19 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM25 28h1v1h-1zM26 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM12 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM25 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM14 30h1v1h-1zM17 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM22 30h1v1h-1zM24 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM14 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM26 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM14 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM18 32h1v1h-1zM20 32h1v1h-1zM23 32h1v1h-1zM26 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM14 33h1v1h-1zM15 33h1v1h-1zM18 33h1v1h-1zM21 33h1v1h-1zM22 33h1v1h-1zM23 33h1v1h-1zM24 33h1v1h-1zM27 33h1v1h-1zM28 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM35 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM16 34h1v1h-1zM17 34h1v1h-1zM19 34h1v1h-1zM22 34h1v1h-1zM24 34h1v1h-1zM25 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM33 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM13 35h1v1h-1zM14 35h1v1h-1zM15 35h1v1h-1zM18 35h1v1h-1zM19 35h1v1h-1zM20 35h1v1h-1zM21 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM16 36h1v1h-1zM18 36h1v1h-1zM21 36h1v1h-1zM23 36h1v1h-1zM25 36h1v1h-1zM27 36h1v1h-1zM28 36h1v1h-1zM29 36h1v1h-1zM36 36h1v1h-1z\"/></svg>";
+        var QR_URL = "https://gmlduqzhd123-lab.github.io/destiny/", QR_NAME = "별빛 나침반 (星光)";
+        var QR_SVG = "<svg class=\"yq-qr\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 41 41\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"별빛 나침반 주소 QR 코드\"><rect width=\"41\" height=\"41\" fill=\"#fff\"/><path fill=\"#000\" d=\"M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM20 4h1v1h-1zM22 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM33 4h1v1h-1zM34 4h1v1h-1zM35 4h1v1h-1zM36 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM17 5h1v1h-1zM18 5h1v1h-1zM22 5h1v1h-1zM23 5h1v1h-1zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM21 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM33 6h1v1h-1zM34 6h1v1h-1zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1zM20 7h1v1h-1zM21 7h1v1h-1zM23 7h1v1h-1zM25 7h1v1h-1zM26 7h1v1h-1zM27 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM33 7h1v1h-1zM34 7h1v1h-1zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM13 8h1v1h-1zM15 8h1v1h-1zM17 8h1v1h-1zM20 8h1v1h-1zM21 8h1v1h-1zM23 8h1v1h-1zM26 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM33 8h1v1h-1zM34 8h1v1h-1zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM17 9h1v1h-1zM19 9h1v1h-1zM24 9h1v1h-1zM27 9h1v1h-1zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM33 10h1v1h-1zM34 10h1v1h-1zM35 10h1v1h-1zM36 10h1v1h-1zM12 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM21 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM28 11h1v1h-1zM4 12h1v1h-1zM8 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM12 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM19 12h1v1h-1zM21 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM30 12h1v1h-1zM31 12h1v1h-1zM32 12h1v1h-1zM33 12h1v1h-1zM36 12h1v1h-1zM5 13h1v1h-1zM7 13h1v1h-1zM8 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM18 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM21 13h1v1h-1zM22 13h1v1h-1zM24 13h1v1h-1zM25 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM33 13h1v1h-1zM34 13h1v1h-1zM35 13h1v1h-1zM4 14h1v1h-1zM5 14h1v1h-1zM6 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM13 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM18 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM24 14h1v1h-1zM27 14h1v1h-1zM29 14h1v1h-1zM33 14h1v1h-1zM35 14h1v1h-1zM4 15h1v1h-1zM5 15h1v1h-1zM6 15h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM15 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM23 15h1v1h-1zM26 15h1v1h-1zM27 15h1v1h-1zM28 15h1v1h-1zM35 15h1v1h-1zM5 16h1v1h-1zM7 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM20 16h1v1h-1zM23 16h1v1h-1zM26 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM31 16h1v1h-1zM32 16h1v1h-1zM33 16h1v1h-1zM35 16h1v1h-1zM4 17h1v1h-1zM5 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM14 17h1v1h-1zM17 17h1v1h-1zM18 17h1v1h-1zM22 17h1v1h-1zM23 17h1v1h-1zM24 17h1v1h-1zM25 17h1v1h-1zM28 17h1v1h-1zM29 17h1v1h-1zM31 17h1v1h-1zM33 17h1v1h-1zM5 18h1v1h-1zM7 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM14 18h1v1h-1zM15 18h1v1h-1zM16 18h1v1h-1zM19 18h1v1h-1zM21 18h1v1h-1zM24 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM28 18h1v1h-1zM29 18h1v1h-1zM30 18h1v1h-1zM34 18h1v1h-1zM35 18h1v1h-1zM4 19h1v1h-1zM5 19h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM8 19h1v1h-1zM11 19h1v1h-1zM13 19h1v1h-1zM18 19h1v1h-1zM19 19h1v1h-1zM20 19h1v1h-1zM21 19h1v1h-1zM22 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM28 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM31 19h1v1h-1zM32 19h1v1h-1zM33 19h1v1h-1zM7 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM14 20h1v1h-1zM16 20h1v1h-1zM18 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM23 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM27 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM32 20h1v1h-1zM35 20h1v1h-1zM4 21h1v1h-1zM9 21h1v1h-1zM12 21h1v1h-1zM13 21h1v1h-1zM16 21h1v1h-1zM17 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM22 21h1v1h-1zM24 21h1v1h-1zM27 21h1v1h-1zM29 21h1v1h-1zM33 21h1v1h-1zM34 21h1v1h-1zM35 21h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM14 22h1v1h-1zM16 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM30 22h1v1h-1zM31 22h1v1h-1zM33 22h1v1h-1zM35 22h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM9 23h1v1h-1zM11 23h1v1h-1zM12 23h1v1h-1zM15 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM22 23h1v1h-1zM23 23h1v1h-1zM25 23h1v1h-1zM27 23h1v1h-1zM28 23h1v1h-1zM29 23h1v1h-1zM31 23h1v1h-1zM36 23h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM7 24h1v1h-1zM9 24h1v1h-1zM10 24h1v1h-1zM15 24h1v1h-1zM19 24h1v1h-1zM22 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM27 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM31 24h1v1h-1zM32 24h1v1h-1zM33 24h1v1h-1zM4 25h1v1h-1zM9 25h1v1h-1zM12 25h1v1h-1zM14 25h1v1h-1zM20 25h1v1h-1zM23 25h1v1h-1zM25 25h1v1h-1zM26 25h1v1h-1zM27 25h1v1h-1zM28 25h1v1h-1zM29 25h1v1h-1zM31 25h1v1h-1zM33 25h1v1h-1zM35 25h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM14 26h1v1h-1zM15 26h1v1h-1zM20 26h1v1h-1zM23 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM29 26h1v1h-1zM32 26h1v1h-1zM34 26h1v1h-1zM35 26h1v1h-1zM6 27h1v1h-1zM7 27h1v1h-1zM13 27h1v1h-1zM14 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM21 27h1v1h-1zM23 27h1v1h-1zM24 27h1v1h-1zM25 27h1v1h-1zM26 27h1v1h-1zM27 27h1v1h-1zM29 27h1v1h-1zM30 27h1v1h-1zM32 27h1v1h-1zM35 27h1v1h-1zM36 27h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM9 28h1v1h-1zM10 28h1v1h-1zM11 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM14 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM19 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM25 28h1v1h-1zM26 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM31 28h1v1h-1zM32 28h1v1h-1zM35 28h1v1h-1zM12 29h1v1h-1zM17 29h1v1h-1zM18 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM21 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM25 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM35 29h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM9 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM14 30h1v1h-1zM17 30h1v1h-1zM18 30h1v1h-1zM19 30h1v1h-1zM22 30h1v1h-1zM24 30h1v1h-1zM28 30h1v1h-1zM30 30h1v1h-1zM32 30h1v1h-1zM33 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM14 31h1v1h-1zM16 31h1v1h-1zM17 31h1v1h-1zM18 31h1v1h-1zM26 31h1v1h-1zM28 31h1v1h-1zM32 31h1v1h-1zM36 31h1v1h-1zM4 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM10 32h1v1h-1zM12 32h1v1h-1zM14 32h1v1h-1zM15 32h1v1h-1zM17 32h1v1h-1zM18 32h1v1h-1zM20 32h1v1h-1zM23 32h1v1h-1zM26 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM30 32h1v1h-1zM31 32h1v1h-1zM32 32h1v1h-1zM33 32h1v1h-1zM35 32h1v1h-1zM36 32h1v1h-1zM4 33h1v1h-1zM6 33h1v1h-1zM7 33h1v1h-1zM8 33h1v1h-1zM10 33h1v1h-1zM14 33h1v1h-1zM15 33h1v1h-1zM18 33h1v1h-1zM21 33h1v1h-1zM22 33h1v1h-1zM23 33h1v1h-1zM24 33h1v1h-1zM27 33h1v1h-1zM28 33h1v1h-1zM30 33h1v1h-1zM31 33h1v1h-1zM32 33h1v1h-1zM33 33h1v1h-1zM34 33h1v1h-1zM35 33h1v1h-1zM4 34h1v1h-1zM6 34h1v1h-1zM7 34h1v1h-1zM8 34h1v1h-1zM10 34h1v1h-1zM16 34h1v1h-1zM17 34h1v1h-1zM19 34h1v1h-1zM22 34h1v1h-1zM24 34h1v1h-1zM25 34h1v1h-1zM28 34h1v1h-1zM30 34h1v1h-1zM31 34h1v1h-1zM32 34h1v1h-1zM33 34h1v1h-1zM4 35h1v1h-1zM10 35h1v1h-1zM13 35h1v1h-1zM14 35h1v1h-1zM15 35h1v1h-1zM18 35h1v1h-1zM19 35h1v1h-1zM20 35h1v1h-1zM21 35h1v1h-1zM25 35h1v1h-1zM26 35h1v1h-1zM28 35h1v1h-1zM29 35h1v1h-1zM30 35h1v1h-1zM4 36h1v1h-1zM5 36h1v1h-1zM6 36h1v1h-1zM7 36h1v1h-1zM8 36h1v1h-1zM9 36h1v1h-1zM10 36h1v1h-1zM12 36h1v1h-1zM16 36h1v1h-1zM18 36h1v1h-1zM21 36h1v1h-1zM23 36h1v1h-1zM25 36h1v1h-1zM27 36h1v1h-1zM28 36h1v1h-1zM29 36h1v1h-1zM36 36h1v1h-1z\"/></svg>";
         document.addEventListener('click', function (e) {
             var btn = e.target.closest && e.target.closest('[data-qr]');
             if (!btn) return;

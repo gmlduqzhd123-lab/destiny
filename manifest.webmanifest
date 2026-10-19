@@ -1,13 +1,13 @@
 {
-  "name": "명운 (命運) - 사주·궁합·타로",
-  "short_name": "명운",
-  "description": "이름·생년월일·MBTI로 보는 사주·궁합·타로",
+  "name": "별빛 나침반 - 기질 도감 · 우정 케미 · 마음 카드",
+  "short_name": "별빛 나침반",
+  "description": "전통 책력과 MBTI로 알아보는 나의 자연물 기질, 우정 케미, 마음 카드 (학생용·선생님용)",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f0d0b",
-  "theme_color": "#0f0d0b",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
   "icons": [
     {
       "src": "icons/icon-192.png",

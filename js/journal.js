@@ -1,12 +1,15 @@
 /**
- * [Journal] 운세 일지 — 방문한 날의 운세를 기기에 쌓아 달력·연속 방문 도장·한 줄 기록으로 보여 줍니다.
+ * [Journal] 마음 일기 / 교단 일지 — 방문한 날의 기운을 기기에 쌓아 달력·연속 방문 도장·한 줄 기록으로 보여 줍니다.
  * 저장 구조: { [사용자 키]: { YYYYMMDD: { god, hanja, avg, rating, memo } } }
  */
 const Journal = (() => {
     const KEY = 'myeongun_journal_v1';
     const $ = id => document.getElementById(id);
-    const RATINGS = { good: '좋았어요', soso: '보통이었어요', bad: '아쉬웠어요' };
-    const view = { userKey: '', year: 0, month: 0, selected: null };
+    const RATINGS = {
+        student: { good: '☀️ 신났어요', soso: '⛅ 평온했어요', bad: '🌧️ 토닥토닥' },
+        teacher: { good: '좋았어요', soso: '무난했어요', bad: '고생했어요' }
+    };
+    const view = { userKey: '', mode: 'student', year: 0, month: 0, selected: null };
 
     function loadAll() {
         try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
@@ -77,9 +80,10 @@ const Journal = (() => {
             return;
         }
         const y = view.selected;
+        const map = RATINGS[view.mode] || RATINGS.student;
         const memo = rec.memo ? rec.memo.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) : '';
         $('logDetail').innerHTML = `<b>${y.slice(0, 4)}.${y.slice(4, 6)}.${y.slice(6)}</b> · ${rec.god}(${rec.hanja})의 날 · 평균 ${rec.avg}점`
-            + (rec.rating ? `<br>실제로는 <b style="color:var(--gold)">${RATINGS[rec.rating]}</b>` : '')
+            + (rec.rating ? `<br>마음 날씨 · <b style="color:var(--gold)">${map[rec.rating]}</b>` : '')
             + (memo ? `<br>“${memo}”` : '');
         $('logDetail').style.display = 'block';
     }
@@ -87,7 +91,11 @@ const Journal = (() => {
     function renderToday() {
         const rec = entries(view.userKey)[toYmd(new Date())] || {};
         $('memoText').value = rec.memo || '';
-        document.querySelectorAll('#ratingBtns button').forEach(b => b.classList.toggle('on', b.dataset.rating === rec.rating));
+        const map = RATINGS[view.mode] || RATINGS.student;
+        document.querySelectorAll('#ratingBtns button').forEach(b => {
+            b.textContent = map[b.dataset.rating];
+            b.classList.toggle('on', b.dataset.rating === rec.rating);
+        });
     }
 
     function render() {
@@ -97,7 +105,6 @@ const Journal = (() => {
         renderToday();
     }
 
-    // 결과를 볼 때마다 오늘의 기록을 남깁니다 (메모·평가는 유지).
     function recordVisit(userKey, godName, godHanja, avg) {
         view.userKey = userKey;
         const now = new Date();
@@ -106,6 +113,12 @@ const Journal = (() => {
         view.selected = toYmd(now);
         update(userKey, toYmd(now), { god: godName, hanja: godHanja, avg });
         render();
+    }
+
+    function setMode(mode) {
+        view.mode = mode;
+        renderToday();
+        if (view.userKey) renderDetail();
     }
 
     function init(onSaved) {
@@ -131,5 +144,5 @@ const Journal = (() => {
         });
     }
 
-    return { init, recordVisit, stats };
+    return { init, recordVisit, setMode, stats };
 })();

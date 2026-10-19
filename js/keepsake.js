@@ -1,5 +1,5 @@
 /**
- * [Keepsake] 명운첩(命運帖) 카드 — 한지 배경에 오늘의 풀이와 낙관 도장을 담은 공유 이미지 (9:16)
+ * [Keepsake] 별빛 도감(星光帖) 카드 — 한지 배경에 오늘의 기질·다짐과 도장을 담은 공유 이미지 (9:16)
  * 외부 캡처 라이브러리 없이 Canvas 2D로 직접 그립니다.
  */
 const Keepsake = (() => {
@@ -89,7 +89,6 @@ const Keepsake = (() => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         if (ch.length > 1) {
-            // 2글자 도장은 세로 배치
             ctx.fillText(ch[0], 0, -size * 0.2);
             ctx.fillText(ch[1], 0, size * 0.2);
         } else {
@@ -120,12 +119,13 @@ const Keepsake = (() => {
         ctx.lineWidth = 2;
         ctx.strokeRect(68, 68, W - 136, H - 136);
 
+        const isTeacher = data.mode === 'teacher';
         let y = 200;
-        drawText('命 運 帖', W / 2, y, { font: `700 88px ${SERIF}` });
+        drawText('星 光 帖', W / 2, y, { font: `700 88px ${SERIF}` });
         y += 60;
-        drawText(`명운첩 · ${data.dateLabel}`, W / 2, y, { font: `400 34px ${SERIF}`, color: '#6b5e52' });
+        drawText(`${isTeacher ? '별빛 나침반' : '별빛 도감'} · ${data.dateLabel}`, W / 2, y, { font: `400 34px ${SERIF}`, color: '#6b5e52' });
         y += 90;
-        drawText(`${data.name} 님`, W / 2, y, { font: `700 60px ${SERIF}` });
+        drawText(`${data.name} ${isTeacher ? '선생님' : '학생'}`, W / 2, y, { font: `700 58px ${SERIF}` });
         y += 54;
         drawText(data.subtitle, W / 2, y, { font: `400 32px ${SANS}`, color: '#6b5e52' });
         y += 50;
@@ -183,10 +183,14 @@ const Keepsake = (() => {
         y += 40;
 
         // 점수 막대
-        const rows = [
-            ['연애', data.scores.love, '#c75b7a'],
-            ['금전', data.scores.money, '#b8932c'],
-            ['직장', data.scores.work, '#3f73a8']
+        const rows = isTeacher ? [
+            ['소통', data.scores.love, '#c75b7a'],
+            ['활력', data.scores.money, '#b8932c'],
+            ['수업', data.scores.work, '#3f73a8']
+        ] : [
+            ['우정', data.scores.love, '#c75b7a'],
+            ['탐구', data.scores.money, '#b8932c'],
+            ['배움', data.scores.work, '#3f73a8']
         ];
         rows.forEach(([label, v, c]) => {
             ctx.font = `700 34px ${SANS}`;
@@ -213,8 +217,8 @@ const Keepsake = (() => {
         }
 
         // 낙관 (고정)
-        drawText('재미로 보는 운세 · © 2026 엽쌤', 170, H - 120, { font: `400 26px ${SANS}`, color: '#8a7d70', align: 'left' });
-        drawSeal('命運', W - 190, H - 190, 120, -0.06, 0.92);
+        drawText('별빛 나침반 · © 2026 엽쌤', 170, H - 120, { font: `400 26px ${SANS}`, color: '#8a7d70', align: 'left' });
+        drawSeal('星光', W - 190, H - 190, 120, -0.06, 0.92);
 
         // 사용자가 찍은 도장
         stamps.forEach(s => drawSeal(s.ch, s.x, s.y, 150, s.rot, 0.85));
@@ -223,8 +227,7 @@ const Keepsake = (() => {
     async function render(newData) {
         data = newData;
         stamps = [];
-        // 글꼴이 글자 묶음별로 나뉘어 있어, 카드에 그릴 글자를 넘겨 필요한 조각만 미리 받습니다.
-        const sample = JSON.stringify(newData) + '0123456789연애금전직장재미로보는운세';
+        const sample = JSON.stringify(newData) + '0123456789우정탐구배움소통활력수업별빛나침반도감학생선생님';
         try {
             await Promise.all([
                 document.fonts.load(`700 40px "Gowun Batang"`, sample),
