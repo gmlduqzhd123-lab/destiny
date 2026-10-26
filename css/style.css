@@ -650,7 +650,10 @@ body[data-mode="teacher"] .student-only { display: none; }
     background: var(--surface-2); border-radius: 10px; padding: 12px 14px;
     border-left: 3px solid var(--gold); line-height: 1.6; font-size: 0.9rem;
 }
-.coach-item b { display: block; color: var(--gold); font-size: 0.82rem; margin-bottom: 4px; }
+.coach-item b { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--gold); font-size: 0.82rem; margin-bottom: 4px; }
+.coach-item[data-copy] { cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.coach-item[data-copy]:hover { background: rgba(212, 175, 55, 0.08); }
+.coach-item .copy-hint { font-weight: 500; font-size: 0.72rem; color: var(--muted); }
 
 .edu-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
 .edu-tabs button {

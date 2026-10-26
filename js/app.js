@@ -8,6 +8,13 @@ const App = (() => {
     const STORE_MODE = 'starcompass_mode';
     const STORE_OMIKUJI = 'myeongun_omikuji';
     const MBTI_TYPES = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'];
+    const HISTORICAL_FIGURES = [
+        { name: '세종대왕', birth: '1397.05.15' },
+        { name: '이순신 장군', birth: '1545.04.28' },
+        { name: '신사임당', birth: '1504.10.29' },
+        { name: '정약용', birth: '1762.08.05' },
+        { name: '유관순 열사', birth: '1902.12.16' }
+    ];
 
     const SEALS = {
         student: [
@@ -75,7 +82,7 @@ const App = (() => {
         if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
             return { error: '존재하지 않는 날짜입니다. 다시 확인해 주세요.' };
         }
-        if (y < 1900 || date > new Date()) return { error: '1900년 이후, 오늘 이전의 날짜를 입력해 주세요.' };
+        if (y < 1000 || date > new Date()) return { error: '1000년 이후, 오늘 이전의 날짜를 입력해 주세요.' };
         return { y, m, d, ymd: str };
     }
 
@@ -109,7 +116,19 @@ const App = (() => {
 
     function birthPreview(inputEl, noteEl, cal) {
         const raw = inputEl.value.trim();
-        if (!raw) { noteEl.textContent = ''; noteEl.classList.remove('err'); return; }
+        if (!raw) {
+            if (inputEl === $('birthDate')) {
+                const idx = new Date().getDate() % HISTORICAL_FIGURES.length;
+                const f1 = HISTORICAL_FIGURES[idx], f2 = HISTORICAL_FIGURES[(idx + 1) % HISTORICAL_FIGURES.length];
+                noteEl.textContent = isTeacher()
+                    ? `💡 수업 활용 팁: 역사 인물(예: ${f1.name} ${f1.birth}, ${f2.name} ${f2.birth})도 분석할 수 있어요.`
+                    : `💡 내 생일이나 역사 인물(예: ${f1.name} ${f1.birth}, ${f2.name} ${f2.birth})도 넣어 보세요!`;
+            } else {
+                noteEl.textContent = '';
+            }
+            noteEl.classList.remove('err');
+            return;
+        }
         const b = resolveBirth(raw, cal);
         if (b.error) {
             noteEl.textContent = raw.replace(/\D/g, '').length >= 6 ? b.error : '';
@@ -298,8 +317,10 @@ const App = (() => {
             : '이름, 생년월일, 성별, MBTI로 찾는 나의 별빛 기질과 우정 나침반';
 
         $('labelUserName').textContent = teacher ? '이름 (선생님 또는 분석할 학생)' : '이름 (또는 별명)';
-        $('userName').placeholder = teacher ? '예: 김선생 또는 학생 이름' : '예: 김별빛 (별명도 괜찮아요)';
-        $('birthDate').placeholder = teacher ? '예: 1990.05.15 또는 2015.05.05' : '예: 2015.05.05 또는 20150505';
+        const fig = HISTORICAL_FIGURES[new Date().getDate() % HISTORICAL_FIGURES.length];
+        $('userName').placeholder = teacher ? '예: 김선생, 학생 이름 또는 역사 인물' : `예: 김별빛 또는 ${fig.name}`;
+        $('birthDate').placeholder = teacher ? '예: 1990.05.15 또는 2015.05.05' : `예: 2015.05.05 또는 ${fig.birth}(${fig.name})`;
+        birthPreview($('birthDate'), $('birthPreview'), mainCal());
         $('btnGenderF').textContent = teacher ? '여성' : '여자';
         $('btnGenderM').textContent = teacher ? '남성' : '남자';
         $('optPGenderM').textContent = teacher ? '남성(남학생)' : '남자';
@@ -630,10 +651,10 @@ const App = (() => {
         if (!SajuData.coaching || !SajuData.coaching[stemIdx]) return;
         const c = SajuData.coaching[stemIdx];
         $('coachList').innerHTML = `
-            <div class="coach-item"><b>👀 교실 · 학습 태도 특징</b>${c.attitude}</div>
-            <div class="coach-item"><b>👏 효과적인 칭찬 · 동기부여 처방</b>${c.praise}</div>
-            <div class="coach-item"><b>🧭 생활지도 · 갈등 코칭 팁</b>${c.guide}</div>
-            <div class="coach-item"><b>📝 학부모 상담 · 행동발달 기록 예시</b>${c.record}</div>`;
+            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.attitude)}" title="터치하면 복사됩니다"><b><span>👀 교실 · 학습 태도 특징</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.attitude}</div>
+            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.praise)}" title="터치하면 복사됩니다"><b><span>👏 효과적인 칭찬 · 동기부여 처방</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.praise}</div>
+            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.guide)}" title="터치하면 복사됩니다"><b><span>🧭 생활지도 · 갈등 코칭 팁</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.guide}</div>
+            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.record)}" title="터치하면 복사됩니다"><b><span>📝 학부모 상담 · 행동발달 기록 예시</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.record}</div>`;
     }
 
     function renderEduTopic() {
@@ -798,6 +819,7 @@ const App = (() => {
         const gt = activeGodText(t.god);
         return {
             mode: state.mode,
+            stemIdx: sj.day.stem.i,
             pillars: [['時', sj.hour], ['日', sj.day], ['月', sj.month], ['年', sj.year]].map(([label, p], i) => ({
                 label, stem: p && p.stem, branch: p && p.branch, me: i === 1
             })),
@@ -926,6 +948,10 @@ const App = (() => {
             renderEduTopic();
         }));
 
+        $('coachList').addEventListener('click', e => {
+            const item = e.target.closest('.coach-item[data-copy]');
+            if (item) copyText(item.dataset.copy, '📋 코칭·행발 문구가 복사되었습니다. 상담·행발 기록에 붙여 넣어 보세요.');
+        });
         $('fortuneForm').addEventListener('submit', e => {
             e.preventDefault();
             const r = readForm();
@@ -1010,9 +1036,25 @@ const App = (() => {
         $('btnShareCompat').addEventListener('click', () => {
             const c = state.compat;
             const gName = isTeacher() && c.grade.teacherName ? c.grade.teacherName : c.grade.name;
+            const aSt = c.a.profile.saju.day.stem, bSt = c.b.profile.saju.day.stem;
+            const aChar = `${aSt.hanja}${Saju.EL_HANJA[aSt.el]}(${c.a.profile.ilgan.title})`;
+            const bChar = `${bSt.hanja}${Saju.EL_HANJA[bSt.el]}(${c.b.profile.ilgan.title})`;
+            const roleTip = c.teamTip
+                ? (isTeacher() ? `🏫 모둠 코칭 팁: ${c.teamTip.teacherGuide}` : `🤝 모둠 협동 약속: ${c.teamTip.studentPromise}`)
+                : '';
+            const header = isTeacher() ? '[🧭 별빛 나침반 · 관계·모둠 시너지 리포트]' : '[🌟 별빛 나침반 · 짝꿍·모둠 우정 인증서]';
+            const msg = [
+                header,
+                `• ${c.a.name}: ${aChar}${c.a.mbti ? ' · ' + c.a.mbti : ''}`,
+                `• ${c.b.name}: ${bChar}${c.b.mbti ? ' · ' + c.b.mbti : ''}`,
+                `• 시너지 지수: ${c.total}점 (${gName})`,
+                roleTip,
+                '',
+                '우리 반 기질 도감과 모둠 케미도 별빛 나침반에서 확인해 보세요!'
+            ].filter(Boolean).join('\n');
             shareOrCopy(
                 '별빛 나침반 우정 케미',
-                `✨ ${c.a.name} × ${c.b.name} 케미 ${c.total}점 · ${gName}\n\n우리 케미도 별빛 나침반에서 확인해 보세요!`,
+                msg,
                 appUrl()
             );
         });
