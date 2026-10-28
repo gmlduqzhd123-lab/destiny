@@ -678,3 +678,49 @@ body[data-mode="teacher"] .student-only { display: none; }
 /* 양력/음력 선택 */
 .seg-cal { margin-bottom: 8px; }
 .seg-cal button { padding: 8px 6px; font-size: 0.85rem; }
+
+/* 원클릭 복사·일기 연동 박스 인터랙션 */
+#quoteCard, #eduBody, #missionBox { cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+#quoteCard:hover, #eduBody:hover, #missionBox:hover { border-color: var(--gold); }
+#missionBox .copy-hint { float: right; font-size: 0.72rem; color: var(--gold); font-weight: 600; }
+
+/* 교실 전자칠판 · TV 대화면 미러링 자동 가독성 최적화 */
+@media (min-width: 1024px) {
+    html { font-size: 17px; }
+    .wrap { max-width: 580px; }
+    .card { padding: 24px 22px; }
+    .lead { font-size: 1.05rem; line-height: 1.8; }
+    .tabbar-inner { max-width: 580px; }
+}
+
+/* 버튼 없는 Ctrl+P 전용: A4 흑백 절약형 자기이해·코칭 활동지 인쇄 스타일 */
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #111111 !important;
+        font-size: 11pt;
+    }
+    .stars, .mode-switch, .tabbar, .keepsake-wrap, .omi-stage,
+    #inputView, #compatFormCard, #btnReset, #btnEditInfo, #toneToggle,
+    .install-btn, .qr-btn, .qm, .copy-hint, .sheet, .sheet-dim, .toast {
+        display: none !important;
+    }
+    .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    .tab-panel[data-panel="today"],
+    .tab-panel[data-panel="saju"] {
+        display: block !important;
+    }
+    .card, .coach-item, .edu-body, .gh-item, .theme-box, .mission, .mbti-box {
+        background: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #cccccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        margin-bottom: 10px !important;
+        padding: 12px !important;
+    }
+    .card-title, .ilgan-title, .coach-item b, .day-head .hanja, .day-head .name, .who-name {
+        color: #000000 !important;
+    }
+    .muted, .sub, .who-meta { color: #444444 !important; }
+}

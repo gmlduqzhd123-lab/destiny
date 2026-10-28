@@ -104,8 +104,19 @@ const Tarot = (() => {
                 <div class="tx">${rev ? card.rev : card.up}</div>
             </div>`;
         });
-        if (ctx.flipped.size === pos.length && pos.length > 1) {
-            items.push(`<div class="tarot-item"><div class="hd"><span class="pos">${ctx.mode === 'student' ? '별빛 종합 메시지' : '종합 리딩'}</span></div><div class="tx">${summary()}</div></div>`);
+        if (ctx.flipped.size === pos.length) {
+            const pickedLines = ctx.picks.map((di, k) => {
+                const { card, rev } = ctx.deck[di];
+                return `• ${pos[k]}: [${cardTitle(card)}] (${card.kw}${rev ? ' · ' + revLabel : ''})`;
+            }).join('\n');
+            const sumText = summary();
+            const copyPayload = [
+                ctx.mode === 'student' ? '[🌟 별빛 상징 이야기 · 글쓰기 씨앗]' : '[🧭 교단 힐링 타로 리딩 기록]',
+                ctx.question.trim() ? `주제·질문: ${ctx.question.trim()}` : '',
+                pickedLines,
+                `💡 종합 메시지: ${sumText}`
+            ].filter(Boolean).join('\n');
+            items.push(`<div class="tarot-item" role="button" tabindex="0" data-copy="${escapeHtml(copyPayload)}" style="cursor:pointer;" title="터치하면 글쓰기 씨앗과 리딩 요약이 복사됩니다"><div class="hd"><span class="pos">${ctx.mode === 'student' ? '별빛 종합 메시지 · 이야기 씨앗' : '종합 리딩'}</span><small class="copy-hint" style="float:right;font-weight:400;font-size:0.72rem;color:var(--muted);">📋 터치하여 복사</small></div><div class="tx">${sumText}</div></div>`);
         }
         $('tarotReading').innerHTML = (ctx.question.trim() ? `<p class="small muted" style="margin:0 0 8px;">주제·질문 · ${escapeHtml(ctx.question.trim())}</p>` : '') + items.join('');
         $('deckGuide').textContent = ctx.flipped.size === pos.length ? '카드가 전하는 이야기를 읽어 보세요.' : '남은 카드도 뒤집어 보세요.';
@@ -172,6 +183,12 @@ const Tarot = (() => {
             reset();
         });
         $('btnTarotReset').addEventListener('click', reset);
+        $('tarotReading').addEventListener('click', e => {
+            const box = e.target.closest('.tarot-item[data-copy]');
+            if (box && typeof App !== 'undefined' && App.copyText) {
+                App.copyText(box.dataset.copy, '📋 상징 카드 키워드와 이야기 씨앗이 복사되었습니다. 배움공책·패들렛에 붙여 넣어 보세요.');
+            }
+        });
     }
 
     function pickedSummary() {

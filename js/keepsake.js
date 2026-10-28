@@ -447,8 +447,10 @@ const Keepsake = (() => {
             drawText(data.quote.kor, W / 2, y, { font: `400 28px ${SANS}`, color: '#6b5e52', maxWidth: 800, maxLines: 2 });
         }
 
-        // 낙관 (고정)
-        drawText('별빛 나침반 · © 2026 엽쌤', 170, H - 115, { font: `400 26px ${SANS}`, color: '#8a7d70', align: 'left' });
+        // 낙관 및 도감 고유 해시태그·검색 워터마크
+        const tag = meta && data.mbti ? `#${meta.code}-${data.mbti}` : (meta ? `#${meta.code}` : '');
+        const wmText = `별빛 나침반 ${tag ? tag + ' · ' : ''}검색: 엽쌤 별빛 나침반 · © 2026 엽쌤`;
+        drawText(wmText, 120, H - 115, { font: `400 24px ${SANS}`, color: '#8a7d70', align: 'left', maxWidth: 680, maxLines: 1 });
         drawSeal('星光', W - 190, H - 185, 118, -0.06, 0.92);
 
         // 사용자가 찍은 도장

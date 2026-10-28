@@ -44,9 +44,19 @@ const Journal = (() => {
         return { streak, total: list.length, good: list.filter(x => x.rating === 'good').length };
     }
 
+    function streakBadge(streak) {
+        if (streak >= 30) return '👑 나침반 마스터';
+        if (streak >= 14) return '🌕 은하수 항해사';
+        if (streak >= 7) return '⭐ 별빛 관측자';
+        if (streak >= 3) return '🌱 새싹 탐험가';
+        return '✨ 첫 별빛';
+    }
+
     function renderStats() {
         const s = stats(view.userKey, new Date());
         $('jStreak').textContent = s.streak + '일';
+        const lbl = $('jStreakLabel');
+        if (lbl) lbl.textContent = `연속 · ${streakBadge(s.streak)}`;
         $('jTotal').textContent = s.total + '일';
         $('jGood').textContent = s.good + '일';
     }

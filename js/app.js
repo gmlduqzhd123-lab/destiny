@@ -215,7 +215,7 @@ const App = (() => {
                 return;
             }
             const q = quizList[i];
-            box.innerHTML = `<div class="qn">${i + 1} / ${quizList.length}</div>
+            box.innerHTML = `<div class="qn">${i + 1} / ${quizList.length}${q.tip ? ' · ' + q.tip : ''}</div>
                 <div class="qq">${q.q}</div>
                 <div class="qa">
                     <button type="button" data-v="${q.a[1]}">${q.a[0]}</button>
@@ -397,10 +397,15 @@ const App = (() => {
         const now = new Date();
         const d = Saju.todayPillars(now).day;
         $('teaserGz').innerHTML = `${d.stem.hanja}<br>${d.branch.hanja}`;
-        $('teaserDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${isTeacher() ? '오늘의 교실 책력' : '오늘의 별빛 책력'} · ${d.stem.kor}${d.branch.kor}일(${d.stem.hanja}${d.branch.hanja})`;
-        $('teaserText').textContent = ExtraData.dayEl[d.stem.el] + (isTeacher()
-            ? '. 오늘 우리 반 교실과 선생님께는 어떤 기운이 흐를까요?'
-            : '. 이 기운이 오늘 나에게는 어떤 별빛을 비춰 줄까요?');
+        const lon = Saju.sunLongitude(Saju.julianDay(now.getFullYear(), now.getMonth() + 1, now.getDate()));
+        const term = ExtraData.solarTerms ? ExtraData.solarTerms[Math.floor(lon / 15) % 24] : '';
+        const season = ExtraData.schoolSeason && ExtraData.schoolSeason[now.getMonth() + 1];
+        const seasonLine = season ? ' ' + (isTeacher() ? season.teacher : season.student) : '';
+        $('teaserDate').textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 ${isTeacher() ? '오늘의 교실 책력' : '오늘의 별빛 책력'} · ${d.stem.kor}${d.branch.kor}일(${d.stem.hanja}${d.branch.hanja})${term ? ' · ' + term : ''}`;
+        $('teaserText').textContent = ExtraData.dayEl[d.stem.el] + '.' + seasonLine;
+
+
+
     }
 
     function showWelcome(u) {
@@ -661,7 +666,7 @@ const App = (() => {
         if (!ExtraData.eduTopics) return;
         const topic = ExtraData.eduTopics[state.eduTab] || ExtraData.eduTopics.lunar;
         document.querySelectorAll('#eduTabs button').forEach(b => b.classList.toggle('on', b.dataset.edu === state.eduTab));
-        $('eduBody').innerHTML = `<h4>${topic.title}</h4>${topic.body}`;
+        $('eduBody').innerHTML = `<h4><span>${topic.title}</span><small class="copy-hint" style="float:right;font-weight:500;font-size:0.72rem;color:var(--muted);">📋 터치하여 판서 요약 복사</small></h4>${topic.body}`;
     }
 
     function renderSaju() {
@@ -826,6 +831,7 @@ const App = (() => {
             ilganLine: `${sj.day.stem.hanja}${Saju.EL_HANJA[sj.day.stem.el]} · ${state.profile.ilgan.title}`,
             dayTitle: `${isOmikujiDrawn() ? `${todayGrade().hanja} · ` : ''}오늘은 ${t.god.name}(${t.god.hanja})의 날`,
             name: u.name,
+            mbti: u.mbti,
             dateLabel: dateLabel(new Date()),
             subtitle: `${u.mbti} · ${mbtiNick(u.mbti)}`,
             text: gt.day[state.tone],
@@ -951,6 +957,31 @@ const App = (() => {
         $('coachList').addEventListener('click', e => {
             const item = e.target.closest('.coach-item[data-copy]');
             if (item) copyText(item.dataset.copy, '📋 코칭·행발 문구가 복사되었습니다. 상담·행발 기록에 붙여 넣어 보세요.');
+        });
+        $('eduBody').addEventListener('click', () => {
+            const topic = ExtraData.eduTopics && (ExtraData.eduTopics[state.eduTab] || ExtraData.eduTopics.lunar);
+            if (topic && topic.copyText) {
+                copyText(topic.copyText, '📋 수업 판서·발문 요약이 복사되었습니다. 수업안·학급 게시판에 붙여 넣어 보세요.');
+            }
+        });
+        $('quoteCard').addEventListener('click', () => {
+            const q = todayQuote();
+            const head = isTeacher() ? '[🏫 오늘의 학급·조회 명언]' : '[🌟 오늘의 별빛 명언]';
+            const tipLabel = isTeacher() ? '💡 아침 조회·알림장 한마디' : '🌱 생각 씨앗';
+            const msg = `${head}\n${q.hanmun} (${q.src})\n"${q.kor}"${q.tip ? `\n${tipLabel}: ${q.tip}` : ''}`;
+            copyText(msg, '📋 오늘의 명언과 생각 씨앗이 복사되었습니다. 알림장·배움공책에 붙여 넣어 보세요.');
+        });
+        $('missionBox').addEventListener('click', () => {
+            const mission = $('missionText').textContent.trim();
+            if (!mission) return;
+            const memoEl = $('memoText');
+            const prefix = `[오늘의 다짐] ${mission}`;
+            if (!memoEl.value.includes(mission)) {
+                memoEl.value = memoEl.value.trim() ? `${prefix}\n${memoEl.value.trim()}` : `${prefix} — `;
+            }
+            switchTab('journal');
+            setTimeout(() => { memoEl.focus(); memoEl.setSelectionRange(memoEl.value.length, memoEl.value.length); }, 250);
+            toast('📝 오늘의 실천 다짐을 일기장에 담았어요! 내 생각을 덧붙여 저장해 보세요.');
         });
         $('fortuneForm').addEventListener('submit', e => {
             e.preventDefault();

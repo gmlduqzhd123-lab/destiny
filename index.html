@@ -239,7 +239,7 @@
             <div class="card">
                 <h3 class="card-title" id="adviceCardTitle">MBTI 맞춤 조언과 오늘의 다짐</h3>
                 <div class="mbti-box"><span class="mbti-badge" id="mbtiBadge"></span><span id="mbtiAdvice"></span></div>
-                <div class="mission"><b id="missionLabel">오늘의 작은 실천</b> · <span id="missionText"></span></div>
+                <div class="mission" id="missionBox" role="button" tabindex="0" title="터치하면 마음일기에 오늘의 다짐으로 담깁니다"><b id="missionLabel">오늘의 작은 실천</b> · <span id="missionText"></span> <small class="copy-hint">📝 일기에 담기</small></div>
             </div>
 
             <div class="card">
@@ -247,8 +247,8 @@
                 <div class="gaewun" id="gaewunGrid"></div>
             </div>
 
-            <div class="card quote">
-                <h3 class="card-title" id="quoteCardTitle">오늘의 고전 명언 한 구절</h3>
+            <div class="card quote" id="quoteCard" role="button" tabindex="0" title="터치하면 오늘의 명언과 생각 씨앗이 복사됩니다">
+                <h3 class="card-title"><span id="quoteCardTitle">오늘의 고전 명언 한 구절</span><span class="sub">📋 터치하여 복사</span></h3>
                 <div class="hanmun" id="quoteHanmun"></div>
                 <div class="src" id="quoteSrc"></div>
                 <div class="kor" id="quoteKor"></div>
@@ -413,7 +413,7 @@
             <div class="card">
                 <h3 class="card-title" id="journalTitleText">별빛 마음 달력</h3>
                 <div class="streak">
-                    <div><div class="v" id="jStreak"></div><div class="l">연속 방문</div></div>
+                    <div><div class="v" id="jStreak"></div><div class="l" id="jStreakLabel">연속 방문</div></div>
                     <div><div class="v" id="jTotal"></div><div class="l">기록한 날</div></div>
                     <div><div class="v" id="jGood"></div><div class="l">기분 좋은 날</div></div>
                 </div>
