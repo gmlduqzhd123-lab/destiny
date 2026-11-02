@@ -110,6 +110,7 @@
             <div>
                 <div class="teaser-date" id="teaserDate"></div>
                 <div class="teaser-text" id="teaserText"></div>
+                <button type="button" class="link-btn inline sim-link" data-open-sim>☀️ 24절기 태양 여행 보기</button>
             </div>
         </div>
 
@@ -362,6 +363,7 @@
                     <div class="hd"><span id="wolunTitle"></span></div>
                     <div class="tx" id="wolunText"></div>
                 </div>
+                <button type="button" class="btn btn-ghost btn-sm" data-open-sim style="margin-top:12px;">☀️ 24절기 태양 여행 (지구 공전 시뮬레이터)</button>
             </div>
 
             <!-- 🏫 선생님용 전용: 사회·과학·수학 수업용 전통 책력 원리 -->
@@ -373,6 +375,7 @@
                     <button type="button" data-edu="solar">경도·진태양시</button>
                 </div>
                 <div class="edu-body" id="eduBody"></div>
+                <button type="button" class="btn btn-ghost btn-sm" data-open-sim style="margin-top:10px;">☀️ 수업용 태양 황경 시뮬레이터 열기 (전자칠판)</button>
             </div>
 
             <div class="card">
@@ -609,6 +612,26 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ☀️ 24절기 태양 여행 시뮬레이터 -->
+<div class="modal-back" id="simView" hidden>
+    <div class="modal-card sim-card" role="dialog" aria-modal="true" aria-labelledby="simTitle">
+        <div class="sim-head">
+            <h3 id="simTitle">☀️ 24절기 태양 여행 <small id="simYear"></small></h3>
+            <button type="button" class="btn btn-ghost btn-sm" id="simClose" aria-label="닫기">✕</button>
+        </div>
+        <svg id="simSvg" class="sim-svg" viewBox="-170 -170 340 340" role="img" aria-label="태양 둘레를 도는 지구와 24절기 위치"></svg>
+        <div class="sim-info" id="simInfo" aria-live="polite"></div>
+        <input type="range" id="simRange" min="0" max="364" value="0" aria-label="날짜 옮기기">
+        <div class="btn-row">
+            <button type="button" class="btn btn-gold" id="simPlay">▶ 1년 돌려 보기</button>
+            <button type="button" class="btn btn-ghost" id="simToday">오늘로</button>
+        </div>
+        <p class="small muted" style="margin:10px 0 4px; text-align:left;">서울의 낮 길이 (1년)</p>
+        <svg id="simDayChart" class="sim-chart" viewBox="0 0 366 80" role="img" aria-label="서울의 1년 낮 길이 그래프"></svg>
+        <p class="small" style="text-align:left; line-height:1.7; margin:10px 0 0;">지구는 1년에 한 바퀴 태양 둘레를 돌아요. 태양이 하늘에서 지나는 길(황도)을 <b>15°씩 24칸</b>으로 나눈 것이 24절기예요. 지구의 자전축이 <b>23.4°</b> 기울어 있어서 하지에는 해가 높이 떠 낮이 길고, 동지에는 해가 낮게 떠 낮이 짧아요.</p>
+    </div>
+</div>
+
 <!-- 🌟 도감 QR -->
 <div class="modal-back" id="dexQrModal" hidden>
     <div class="modal-card dex-qr-card" role="dialog" aria-modal="true" aria-labelledby="dexQrTitle">
@@ -662,6 +685,7 @@
 <script src="js/classroom.js"></script>
 <script src="js/vendor/qrcode-generator.js"></script>
 <script src="js/dex.js"></script>
+<script src="js/solarsim.js"></script>
     <!-- 📱 오프라인 열기 (서비스 워커) — 설치 버튼은 ys-install.js가 맡음 -->
     <script>
     (function () {

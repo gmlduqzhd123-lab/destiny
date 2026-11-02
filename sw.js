@@ -18,6 +18,7 @@ const APP_SHELL = [
     "./js/classroom.js",
     "./js/vendor/qrcode-generator.js",
     "./js/dex.js",
+    "./js/solarsim.js",
     "./js/compat.js",
     "./js/data/extra-data.js",
     "./js/data/fortune-data.js",

@@ -921,3 +921,21 @@ body.kiosk #dexCard { display: none !important; }
 .ws-one { display: flex; gap: 10px; align-items: stretch; }
 .ws-one .ws-card { width: 32%; }
 .ws-lines p { border-bottom: 1px solid #999; height: 1.9em; margin: 0; }
+
+/* ☀️ 24절기 태양 여행 시뮬레이터 */
+.sim-link { display: inline-block; margin: 6px 0 0 !important; }
+.sim-card { width: min(100%, 520px); text-align: center; }
+.sim-head { display: flex; justify-content: space-between; align-items: center; }
+.sim-head h3 { margin: 0; font-family: var(--serif); color: var(--gold); font-size: 1.15rem; }
+.sim-head small { color: var(--muted); font-size: 0.8rem; }
+.sim-svg { width: min(100%, 340px); height: auto; display: block; margin: 4px auto; }
+.sim-svg .sim-term { font-size: 11px; fill: var(--text); font-family: var(--sans); font-weight: 700; }
+.sim-svg .sim-season { font-size: 13px; fill: var(--muted); opacity: 0.6; font-family: var(--serif); }
+.sim-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0 10px; }
+.sim-info div { background: var(--surface-2); border-radius: 10px; padding: 8px 4px; }
+.sim-info b { display: block; font-size: 0.92rem; color: var(--gold); }
+.sim-info span { font-size: 0.7rem; color: var(--muted); }
+#simRange { width: 100%; accent-color: var(--gold); margin-bottom: 10px; }
+.sim-chart { width: 100%; height: auto; background: var(--surface-2); border-radius: 10px; }
+.sim-chart .sim-axis { font-size: 9px; fill: var(--muted); }
+@media (min-width: 1024px) { .sim-card { width: min(100%, 720px); } .sim-svg { width: min(100%, 460px); } }
