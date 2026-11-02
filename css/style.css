@@ -862,7 +862,7 @@ body.class-mode .brand p { display: none; }
 @media print {
     body.printing > *:not(#printArea) { display: none !important; }
     body.printing #printArea { display: block !important; }
-    html:has(body.printing), body.printing { background: #fff !important; background-image: none !important; }
+    html:has(body.printing), body.printing { background: #fff !important; background-image: none !important; transition: none !important; color: #111 !important; }
     @page { size: A4; margin: 14mm; }
 }
 
@@ -878,3 +878,46 @@ body.class-mode .brand p { display: none; }
 .modal-back { position: fixed; inset: 0; z-index: 70; background: rgba(2, 6, 23, 0.75); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .modal-back[hidden] { display: none; }
 .modal-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; width: min(100%, 420px); max-height: 100%; overflow: auto; text-align: center; }
+
+/* 🌟 자연물 캐릭터 도감 */
+body.kiosk #dexCard { display: none !important; }
+.dex-track { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.dex-track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), #ff8b7b); transition: width 0.6s; }
+.dex-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.dex-slot {
+    position: relative; border-radius: 10px; padding: 8px 2px 6px; text-align: center; min-height: 74px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--line);
+}
+.dex-slot .h { font-family: var(--serif); font-size: 1.4rem; font-weight: 700; }
+.dex-slot small { font-size: 0.6rem; line-height: 1.25; margin-top: 3px; color: var(--text); opacity: 0.85; }
+.dex-slot.locked { background: var(--surface-2); color: var(--muted); border-style: dashed; }
+.dex-slot.locked .q { font-size: 1.3rem; font-weight: 800; }
+.dex-slot.mine { box-shadow: 0 0 0 2px var(--gold) inset; }
+.dex-slot em { position: absolute; top: -6px; right: -4px; background: var(--gold); color: #1a1408; font-style: normal; font-size: 0.62rem; font-weight: 800; border-radius: 8px; padding: 1px 5px; }
+.dex-qr-card h4 { font-family: var(--serif); color: var(--gold); margin: 6px 0; font-size: 1.1rem; }
+.dex-qr { background: #fff; border-radius: 12px; padding: 8px; width: min(100%, 300px); margin: 0 auto; }
+.dex-qr svg { width: 100%; height: auto; display: block; }
+.dex-code { margin: 10px 0 2px; font-size: 1rem; }
+.dex-code b { font-size: 1.3rem; color: var(--gold); letter-spacing: 0.04em; }
+
+/* ✏️ 상징 카드 활동지 (인쇄) */
+.ws-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; border-bottom: 2px solid #333; padding-bottom: 6px; }
+.ws-head h1 { margin: 0; }
+.ws-who { display: flex; gap: 14px; font-size: 0.85rem; white-space: nowrap; }
+.ws-guide { font-size: 0.85rem; color: #333; margin: 8px 0; }
+.ws-topic { font-size: 0.85rem; background: #f3f3f3; padding: 4px 8px; border-radius: 4px; }
+.ws-label { font-weight: 700; font-size: 0.9rem; margin: 12px 0 4px; }
+.ws-label.right { text-align: right; }
+.ws-three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ws-col { border: 1px solid #999; border-radius: 6px; padding: 6px; }
+.ws-card { text-align: center; border: 1px dashed #999; border-radius: 6px; padding: 6px; }
+.ws-pos { font-size: 0.75rem; font-weight: 800; background: #222; color: #fff; border-radius: 10px; display: inline-block; padding: 1px 8px; }
+.ws-sym { font-size: 1.6rem; margin: 4px 0; }
+.ws-name { font-weight: 800; font-size: 0.9rem; }
+.ws-name small { font-weight: 400; color: #555; }
+.ws-kw { font-size: 0.75rem; color: #444; }
+.ws-draw { border: 1px solid #bbb; height: 90px; margin: 6px 0; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.75rem; }
+.ws-draw.big { height: 150px; flex: 1; }
+.ws-one { display: flex; gap: 10px; align-items: stretch; }
+.ws-one .ws-card { width: 32%; }
+.ws-lines p { border-bottom: 1px solid #999; height: 1.9em; margin: 0; }

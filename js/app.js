@@ -885,6 +885,7 @@ const App = (() => {
         document.body.classList.add('result-mode');
         $('tabbar').style.display = 'flex';
         Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
+        if (typeof Dex !== 'undefined') Dex.setMine(state.profile.saju.day.stem.i);
         if (!state.kiosk) Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
         state.compat = null;
         $('compatResult').style.display = 'none';
