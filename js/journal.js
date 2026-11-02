@@ -154,5 +154,13 @@ const Journal = (() => {
         });
     }
 
-    return { init, recordVisit, setMode, stats };
+    function peopleCount() {
+        return Object.keys(loadAll()).length;
+    }
+
+    function clearAll() {
+        try { localStorage.removeItem(KEY); } catch (e) { /* 무시 */ }
+    }
+
+    return { init, recordVisit, setMode, stats, peopleCount, clearAll };
 })();
