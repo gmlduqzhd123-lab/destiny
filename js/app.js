@@ -88,53 +88,11 @@ const App = (() => {
         return (isTeacher() && FortuneData.mbti.teacherNick ? FortuneData.mbti.teacherNick[mbti] : FortuneData.mbti.nick[mbti]) || '';
     }
 
-    // ---------- 입력 검증 ----------
-    function normalizeBirth(raw) {
-        const str = String(raw || '').trim();
-        const cur = new Date().getFullYear() % 100;
-        const full = yy => (+yy <= cur ? '20' : '19') + yy;
-        if (/^\d{8}$/.test(str)) return str;
-        if (/^\d{6}$/.test(str)) return full(str.slice(0, 2)) + str.slice(2);
-        const m = str.match(/^(\d{4}|\d{2})\D+(\d{1,2})\D+(\d{1,2})\D*$/);
-        if (m) return (m[1].length === 2 ? full(m[1]) : m[1]) + m[2].padStart(2, '0') + m[3].padStart(2, '0');
-        return null;
-    }
-
-    function parseBirth(raw) {
-        const str = normalizeBirth(raw);
-        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 2015.05.05' };
-        const y = +str.slice(0, 4), m = +str.slice(4, 6), d = +str.slice(6, 8);
-        const date = new Date(y, m - 1, d);
-        if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
-            return { error: '존재하지 않는 날짜입니다. 다시 확인해 주세요.' };
-        }
-        if (y < 1000 || date > new Date()) return { error: '1000년 이후, 오늘 이전의 날짜를 입력해 주세요.' };
-        return { y, m, d, ymd: str };
-    }
-
-    function resolveBirth(raw, cal) {
-        if (cal !== 'lunar' && cal !== 'leap') return parseBirth(raw);
-        const str = normalizeBirth(raw);
-        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 2015.05.05' };
-        const ly = +str.slice(0, 4), lm = +str.slice(4, 6), ld = +str.slice(6, 8);
-        if (ly < 1900 || lm < 1 || lm > 12 || ld < 1 || ld > 30) return { error: '음력 날짜를 다시 확인해 주세요. (1900년 이후, 1~12월, 1~30일)' };
-        const leap = cal === 'leap';
-        let solar = null;
-        try {
-            const conv = new KoreanLunarCalendar();
-            if (conv.setLunarDate(ly, lm, ld, leap)) solar = conv.getSolarCalendar();
-        } catch (e) { /* 아래에서 오류로 처리 */ }
-        if (!solar) {
-            return { error: leap ? `${ly}년에는 윤${lm}월 ${ld}일이 없어요. 윤달 여부와 날짜를 확인해 주세요.` : '음력에 없는 날짜예요. 날짜를 다시 확인해 주세요.' };
-        }
-        const b = parseBirth(`${solar.year}${String(solar.month).padStart(2, '0')}${String(solar.day).padStart(2, '0')}`);
-        if (b.error) return b;
-        return { ...b, lunar: str, leap };
-    }
-
-    function formatBirth(ymd) {
-        return `${ymd.slice(0, 4)}.${ymd.slice(4, 6)}.${ymd.slice(6, 8)}`;
-    }
+    // ---------- 입력 검증 (js/birth.js) ----------
+    const normalizeBirth = Birth.normalize;
+    const parseBirth = Birth.parse;
+    const resolveBirth = Birth.resolve;
+    const formatBirth = Birth.format;
 
     function birthLabel(u) {
         return u.cal === 'lunar' ? `음력 ${formatBirth(u.lunar)}${u.leap ? '(윤달)' : ''}` : formatBirth(u.birth);
@@ -546,6 +504,29 @@ const App = (() => {
             <div style="grid-column: span 2;"><b>추천 간식·음식</b><span>${e.food}</span></div>`;
     }
 
+    // 오늘이 생일이면(음력 생일은 올해 양력 날짜로 바꿔서) 축하 배너를 보여 줍니다.
+    function renderSelfBirthday() {
+        const u = state.user, now = new Date();
+        let isToday = false;
+        try {
+            const d = ClassroomLogic.birthdayIn(now.getFullYear(), u);
+            isToday = d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+        } catch (e) { /* 계산할 수 없으면 배너 없음 */ }
+        $('selfBday').hidden = !isToday;
+        if (isToday) $('selfBdayText').textContent = `🎉 오늘은 ${u.name}${isTeacher() ? ' 님' : ''}의 생일이에요! 축하해요!`;
+    }
+
+    async function openSelfBirthday() {
+        const u = state.user, p = state.profile, s = p.saju.day.stem;
+        $('bdayModal').hidden = false;
+        await BirthdayCard.draw($('selfBdayCanvas'), {
+            name: u.name, hanja: s.hanja, el: s.el, title: p.ilgan.title, strength: p.ilgan.strength,
+            term: ClassroomLogic.birthTermName(u.birth),
+            dateLabel: u.cal === 'lunar' ? `음력 ${+u.lunar.slice(4, 6)}월 ${+u.lunar.slice(6, 8)}일` : `${+u.birth.slice(4, 6)}월 ${+u.birth.slice(6, 8)}일`,
+            message: `${u.name}의 ${p.ilgan.strength.split(' · ')[0]}이 세상을 더 반짝이게 해요. 새로운 한 해도 나답게 빛나길!`
+        });
+    }
+
     function todayGrade() {
         const avg = Fortune.average(state.today.scores);
         return ExtraData.grades.find(gr => avg >= gr.min);
@@ -877,6 +858,7 @@ const App = (() => {
     function renderAll() {
         renderHeader();
         renderToday();
+        renderSelfBirthday();
         renderOmikuji();
         renderSaju();
         renderCompat();
@@ -1086,6 +1068,11 @@ const App = (() => {
             renderEduTopic();
         }));
 
+        $('btnReportCurrent').addEventListener('click', () => Classroom.printCurrent(state.user));
+        $('btnSelfBday').addEventListener('click', openSelfBirthday);
+        $('btnSelfBdaySave').addEventListener('click', () => BirthdayCard.download($('selfBdayCanvas'), `생일카드_${state.user.name}.png`));
+        $('btnSelfBdayClose').addEventListener('click', () => { $('bdayModal').hidden = true; });
+        $('bdayModal').addEventListener('click', e => { if (e.target === $('bdayModal')) $('bdayModal').hidden = true; });
         $('coachList').addEventListener('click', e => {
             const item = e.target.closest('.coach-item[data-copy]');
             if (item) copyText(item.dataset.copy, '📋 코칭·행발 문구가 복사되었습니다. 상담·행발 기록에 붙여 넣어 보세요.');

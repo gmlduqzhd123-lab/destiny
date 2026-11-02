@@ -141,14 +141,17 @@ const Compat = (() => {
         };
     }
 
-    function compute(userA, userB) {
-        const a = { ...userA, profile: Fortune.profile(userA) };
-        const b = { ...userB, profile: Fortune.profile(userB) };
+    // 이미 계산한 프로필({ ...user, profile })끼리 점수를 냅니다. 학급 모둠 편성에서 쌍마다 다시 계산하지 않도록 씁니다.
+    function scoreProfiles(a, b) {
         const parts = [stemPart(a, b), branchPart(a, b, 'day'), branchPart(a, b, 'year'), mbtiPart(a, b)];
         const total = Engine.clamp(parts.reduce((s, p) => s + p.score, 0), 0, 100);
         const grade = GRADES.find(g => total >= g.min);
         const teamTip = buildTeamTip(a, b);
         return { a, b, parts, total, grade, teamTip };
+    }
+
+    function compute(userA, userB) {
+        return scoreProfiles({ ...userA, profile: Fortune.profile(userA) }, { ...userB, profile: Fortune.profile(userB) });
     }
 
     // 개인정보나 기존 쿼리·해시를 초대 링크에 포함하지 않습니다.
@@ -157,5 +160,5 @@ const Compat = (() => {
         return url.origin + url.pathname;
     }
 
-    return { compute, inviteUrl };
+    return { compute, scoreProfiles, inviteUrl, ROLE_MAP };
 })();

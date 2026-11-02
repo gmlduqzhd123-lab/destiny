@@ -12,7 +12,7 @@ test('켜면 기억된 정보를 지우고, 결과를 봐도 이름·생일이 �
     await page.click('#btnReset');
     const dialogs = [];
     page.on('dialog', d => { dialogs.push(d.message()); d.accept(); });
-    await page.click('[data-kiosk-on]');
+    await page.click('.kiosk-link [data-kiosk-on]');
     await expect.poll(() => dialogs.length).toBe(2); // 켜기 확인 + 남은 일기 지우기 확인
     expect(dialogs[1]).toContain('1명분');
     await expect(page.locator('#kioskBar')).toBeVisible();
