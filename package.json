@@ -1,0 +1,13 @@
+{
+  "name": "starlight-compass",
+  "private": true,
+  "description": "별빛 나침반 — 정적 웹앱 테스트용 설정 (배포에는 필요 없음)",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:e2e": "playwright test",
+    "serve": "node tests/e2e/server.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

@@ -56,4 +56,9 @@ js/data/*.js            학생용·선생님용 풀이 문장, 교사용 학생 
 
 ## 확인 방법
 
-정적 사이트이므로 빌드 단계는 없습니다. `node --test tests/*.test.cjs`로 개인정보 보호 회귀 검사를 실행하고, `python3 -m http.server 8000`으로 로컬 화면을 열 수 있습니다.
+정적 사이트이므로 빌드 단계는 없습니다. `package.json`은 테스트에만 쓰이며 배포와는 관계없습니다.
+
+- `npm test` — 만세력·음력·출생 시각 보정 계산과 개인정보 보호 회귀 테스트 (Node 내장 테스트, 설치 불필요)
+- `npm ci && npx playwright install chromium && npm run test:e2e` — 휴대폰 크기 화면에서 주요 흐름을 눌러 보는 E2E 테스트
+- `npm run serve` — `http://localhost:4173`에서 로컬 화면 열기
+- PR과 main 푸시마다 GitHub Actions(`.github/workflows/test.yml`)가 두 테스트를 자동으로 실행합니다.
