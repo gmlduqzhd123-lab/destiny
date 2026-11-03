@@ -939,3 +939,26 @@ body.kiosk #dexCard { display: none !important; }
 .sim-chart { width: 100%; height: auto; background: var(--surface-2); border-radius: 10px; }
 .sim-chart .sim-axis { font-size: 9px; fill: var(--muted); }
 @media (min-width: 1024px) { .sim-card { width: min(100%, 720px); } .sim-svg { width: min(100%, 460px); } }
+
+/* 🔊 읽어 주기 · 🌐 다국어 */
+.lang-select {
+    font: inherit; font-size: 0.75rem; font-weight: 700; color: var(--gold); background: rgba(255, 209, 102, 0.12);
+    border: 1px solid var(--gold-deep); border-radius: 16px; padding: 5px 8px; max-width: 110px;
+}
+.tts-btn {
+    margin-left: auto; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--gold-deep);
+    background: transparent; color: var(--gold); font-size: 0.85rem; cursor: pointer; padding: 0; line-height: 1;
+}
+.tts-btn.on { background: var(--gold); color: #1a1408; }
+.card-title .tts-btn + .sub, .card-title .sub + .tts-btn { margin-left: 6px; }
+body.no-tts .tts-btn { display: none; }
+@media print { .tts-btn, .lang-select { display: none !important; } }
+.i18n-card { border-color: var(--gold); }
+.i18n-char { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+.i18n-char .mini-hanja { width: 40px; height: 40px; font-size: 1.3rem; }
+.i18n-char p { margin: 4px 0 0; font-size: 0.9rem; line-height: 1.55; }
+.i18n-row { font-size: 0.88rem; line-height: 1.6; padding: 6px 0; border-top: 1px dashed var(--line); }
+.i18n-row b { color: var(--gold); margin-right: 4px; }
+.brand-install { white-space: nowrap; }
+.brand-actions { flex-wrap: nowrap; align-items: center; margin-left: auto; }
+.lang-select { max-width: 92px; padding: 5px 4px; }

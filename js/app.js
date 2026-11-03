@@ -374,6 +374,12 @@ const App = (() => {
         if (state.user && state.today) {
             renderAll();
         }
+        i18nRefresh();
+    }
+
+    // 다른 언어 화면일 때 앱이 다시 채운 한국어 글자를 번역으로 바꿉니다.
+    function i18nRefresh() {
+        if (typeof I18n !== 'undefined') I18n.refresh();
     }
 
     // ---------- 입력 전 첫 화면 ----------
@@ -567,6 +573,7 @@ const App = (() => {
             store.set(STORE_OMIKUJI, all);
             renderOmikuji();
             renderKeepsake();
+            i18nRefresh();
         }, 900);
     }
 
@@ -863,6 +870,7 @@ const App = (() => {
         renderSaju();
         renderCompat();
         renderKeepsake();
+        i18nRefresh();
     }
 
     // ---------- 탭 ----------
@@ -1242,7 +1250,7 @@ const App = (() => {
     const isKiosk = () => state.kiosk;
 
     return {
-        state, store, toast, copyText, appUrl, switchTab, setMode, isKiosk, enableKiosk, nextPerson,
+        state, store, toast, copyText, appUrl, switchTab, setMode, isKiosk, enableKiosk, nextPerson, isOmikujiDrawn,
         normalizeBirth, parseBirth, resolveBirth, formatBirth, escapeHtml, isTeacher, mbtiNick
     };
 })();

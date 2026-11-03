@@ -91,6 +91,12 @@
                 <button type="button" data-mode="teacher" role="tab" aria-selected="false">🏫 선생님용</button>
             </div>
             <div class="brand-actions">
+                <select id="langSelect" class="lang-select" aria-label="언어 · Language · 语言 · Ngôn ngữ">
+                    <option value="ko">🌐 한국어</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                    <option value="vi">Tiếng Việt</option>
+                </select>
                 <button type="button" class="brand-install" data-ys-install>📲 앱 설치</button>
                 <button type="button" class="brand-install" data-qr aria-label="QR 코드로 접속">📱 QR</button>
             </div>
@@ -146,7 +152,7 @@
                 <p class="field-note" id="birthPreview"></p>
             </div>
             <div class="field">
-                <span class="cap">성별</span>
+                <span class="cap" id="capGender">성별</span>
                 <div class="seg" data-for="gender">
                     <button type="button" data-v="F" id="btnGenderF">여자</button>
                     <button type="button" data-v="M" id="btnGenderM">남자</button>
@@ -154,7 +160,7 @@
                 <input type="hidden" id="gender">
             </div>
             <div class="field">
-                <span class="cap">MBTI 성향 <button type="button" class="link-btn inline" id="btnMbtiQuiz">4문항으로 찾아보기</button></span>
+                <span class="cap"><span id="capMbtiText">MBTI 성향</span> <button type="button" class="link-btn inline" id="btnMbtiQuiz">4문항으로 찾아보기</button></span>
                 <div class="mbti-pick" id="mbtiPick">
                     <div class="seg" data-axis="0"><button type="button" data-v="E">E <small>외향</small></button><button type="button" data-v="I">I <small>내향</small></button></div>
                     <div class="seg" data-axis="1"><button type="button" data-v="S">S <small>감각</small></button><button type="button" data-v="N">N <small>직관</small></button></div>
@@ -198,11 +204,16 @@
 
         <!-- ① 오늘 -->
         <div class="tab-panel" data-panel="today">
+            <div class="card i18n-card" id="i18nCard" hidden data-read>
+                <h3 class="card-title"><span id="i18nCardTitle"></span></h3>
+                <div id="i18nBody"></div>
+                <p class="small muted" id="i18nNote" style="margin:10px 0 0;"></p>
+            </div>
             <div class="self-bday" id="selfBday" hidden>
                 <div><b id="selfBdayText"></b><small>나의 자연물 캐릭터가 담긴 생일 카드를 만들어 볼까요?</small></div>
                 <button type="button" class="btn btn-gold btn-sm" id="btnSelfBday">🎂 생일 카드</button>
             </div>
-            <div class="card omikuji" id="omikuji">
+            <div class="card omikuji" id="omikuji" data-read>
                 <h3 class="card-title"><span id="omiTitleText">오늘의 별빛 뽑기</span> <button type="button" class="qm" data-term="omikuji" aria-label="용어 풀이">?</button></h3>
                 <div class="omi-stage" id="omiStage">
                     <button type="button" class="omi-cup" id="omiCup" aria-label="별빛 통 흔들기">
@@ -219,7 +230,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span><span id="todaySummaryTitle">오늘의 별빛 나침반</span> <button type="button" class="qm" data-term="sipsin" aria-label="용어 풀이">?</button></span><span class="sub" id="todayDate"></span></h3>
                 <div class="day-head">
                     <div class="hanja" id="dayHanja"></div>
@@ -235,7 +246,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title" id="themeCardTitle">오늘의 세 가지 별빛 지수</h3>
                 <div class="theme-list">
                     <div class="theme-box love">
@@ -256,7 +267,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title" id="adviceCardTitle">MBTI 맞춤 조언과 오늘의 다짐</h3>
                 <div class="mbti-box"><span class="mbti-badge" id="mbtiBadge"></span><span id="mbtiAdvice"></span></div>
                 <div class="mission" id="missionBox" role="button" tabindex="0" title="터치하면 마음일기에 오늘의 다짐으로 담깁니다"><b id="missionLabel">오늘의 작은 실천</b> · <span id="missionText"></span> <small class="copy-hint">📝 일기에 담기</small></div>
@@ -297,7 +308,7 @@
                 <p class="small muted" id="sajuNote" style="margin:10px 0 0;"></p>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span><span id="ilganCardTitle">나를 상징하는 자연물 캐릭터</span> <button type="button" class="qm" data-term="ilgan" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ilgan">
                     <div class="ilgan-hanja" id="ilganHanja"></div>
@@ -313,7 +324,7 @@
 
             <!-- 🌟 학생용: 자연물 캐릭터 도감 모으기 -->
             <div class="card student-only" id="dexCard">
-                <h3 class="card-title"><span>🌟 자연물 캐릭터 도감</span><span class="sub" id="dexProgress"></span></h3>
+                <h3 class="card-title"><span id="dexTitleText">🌟 자연물 캐릭터 도감</span><span class="sub" id="dexProgress"></span></h3>
                 <div class="dex-track"><i id="dexBar"></i></div>
                 <p class="small" style="margin:8px 0 10px;">친구의 QR을 휴대폰 카메라로 찍거나 친구 코드를 넣으면, 친구의 캐릭터가 내 도감에 모여요. 10종을 모두 모아 볼까요?</p>
                 <div class="dex-grid" id="dexGrid"></div>
@@ -344,7 +355,7 @@
                 <p class="small" id="ohaengText" style="margin:12px 0 0; line-height:1.7;"></p>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title">MBTI × 자연물 기질 <span class="sub">타고난 기운과 지금의 성격</span></h3>
                 <div class="ilgan-title" id="crossName" style="color:var(--gold); margin-bottom:6px;"></div>
                 <p class="lead" id="crossText" style="font-size:0.95rem;"></p>
@@ -413,7 +424,7 @@
                 </form>
             </div>
 
-            <div class="card" id="compatResult" style="display:none;">
+            <div class="card" id="compatResult" style="display:none;" data-read>
                 <h3 class="card-title"><span><span id="compatResultTitle">두 사람의 우정 케미</span> <button type="button" class="qm" data-term="compat" aria-label="용어 풀이">?</button></span></h3>
                 <div class="gh-pair" id="ghPair"></div>
                 <div class="gh-score">
@@ -436,7 +447,7 @@
 
         <!-- ④ 상징 카드 / 힐링 타로 -->
         <div class="tab-panel" data-panel="tarot">
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span id="tarotTitleText">상징 이야기 · 마음 카드</span> <span class="sub" id="tarotSubText">22장 메이저 상징 카드</span></h3>
                 <div class="spread-select" id="spreadSelect"></div>
                 <div class="field"><input type="text" id="tarotQuestion" placeholder="고민이나 지어 보고 싶은 이야기 주제를 적어 보세요 (선택)" maxlength="60" autocomplete="off"></div>
@@ -686,6 +697,9 @@
 <script src="js/vendor/qrcode-generator.js"></script>
 <script src="js/dex.js"></script>
 <script src="js/solarsim.js"></script>
+<script src="js/data/i18n-data.js"></script>
+<script src="js/reader.js"></script>
+<script src="js/i18n.js"></script>
     <!-- 📱 오프라인 열기 (서비스 워커) — 설치 버튼은 ys-install.js가 맡음 -->
     <script>
     (function () {
