@@ -1,6 +1,6 @@
 // 별빛 나침반 서비스 워커: 앱 설치(홈 화면에 추가)와 오프라인 열기를 돕는다.
 // 파일을 바꿔도 새 버전을 먼저 받아 오므로 보통은 CACHE_VERSION을 올릴 필요가 없다.
-const CACHE_VERSION = 'destiny-v5';
+const CACHE_VERSION = 'destiny-v8';
 // 같은 주소(gmlduqzhd123-lab.github.io)의 다른 앱들과 저장소를 함께 쓰므로, 이 앱의 이전 캐시만 지운다.
 const CACHE_PREFIX = 'destiny-v';
 const APP_SHELL = [
@@ -12,17 +12,29 @@ const APP_SHELL = [
     "./icons/icon-512.png",
     "./icons/apple-touch-icon.png",
     "./js/app.js",
+    "./js/print.js",
+    "./js/birthday-card.js",
+    "./js/classroom-logic.js",
+    "./js/classroom.js",
+    "./js/vendor/qrcode-generator.js",
+    "./js/dex.js",
+    "./js/solarsim.js",
+    "./js/data/i18n-data.js",
+    "./js/reader.js",
+    "./js/i18n.js",
     "./js/compat.js",
     "./js/data/extra-data.js",
     "./js/data/fortune-data.js",
     "./js/data/saju-data.js",
     "./js/data/tarot-data.js",
     "./js/engine.js",
+    "./js/birth.js",
     "./js/fortune.js",
     "./js/journal.js",
     "./js/keepsake.js",
     "./js/saju.js",
     "./js/tarot.js",
+    "./js/worksheet.js",
     "./js/vendor/korean-lunar-calendar.min.js",
     "./css/style.css",
     "./fonts/pretendard/pretendardvariable-dynamic-subset.css"

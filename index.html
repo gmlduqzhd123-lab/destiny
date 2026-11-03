@@ -75,6 +75,13 @@
 </head>
 <body data-mode="student">
 
+<!-- 🔒 공용 기기(교실 태블릿) 모드 알림 줄 -->
+<div class="kiosk-bar" id="kioskBar" hidden>
+    <span class="kiosk-label">🔒 공용 기기 모드 · 정보가 저장되지 않아요</span>
+    <button type="button" class="kiosk-next" id="btnNextPerson">다음 친구 ▶</button>
+    <button type="button" class="kiosk-off" id="btnKioskOff" title="2초 동안 꾹 누르면 해제">해제</button>
+</div>
+
 <div class="container">
     <header class="brand">
         <!-- 상단 바: 학생용/선생님용 테마 스위치 + 앱 설치·QR -->
@@ -84,6 +91,12 @@
                 <button type="button" data-mode="teacher" role="tab" aria-selected="false">🏫 선생님용</button>
             </div>
             <div class="brand-actions">
+                <select id="langSelect" class="lang-select" aria-label="언어 · Language · 语言 · Ngôn ngữ">
+                    <option value="ko">🌐 한국어</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                    <option value="vi">Tiếng Việt</option>
+                </select>
                 <button type="button" class="brand-install" data-ys-install>📲 앱 설치</button>
                 <button type="button" class="brand-install" data-qr aria-label="QR 코드로 접속">📱 QR</button>
             </div>
@@ -103,6 +116,7 @@
             <div>
                 <div class="teaser-date" id="teaserDate"></div>
                 <div class="teaser-text" id="teaserText"></div>
+                <button type="button" class="link-btn inline sim-link" data-open-sim>☀️ 24절기 태양 여행 보기</button>
             </div>
         </div>
 
@@ -112,6 +126,13 @@
             <p class="small muted" id="welcomeMeta" style="margin:4px 0 16px;"></p>
             <button type="button" class="btn btn-gold" id="btnQuick">오늘의 별빛 나침반 바로 보기</button>
             <button type="button" class="link-btn" id="btnEditInfo">다른 사람 정보로 보기</button>
+        </div>
+
+        <!-- 🏫 선생님용: 우리 반 도구 -->
+        <div class="card teacher-only class-entry" id="classEntry">
+            <h3 class="card-title"><span>🏫 우리 반 도구</span><span class="sub">명렬표 한 번으로</span></h3>
+            <p class="small" style="margin-top:0;">명렬표를 붙여 넣으면 <b>모둠 자동 편성 · 기질 분포 보드 · 생일 카드 · 학생 상담 리포트</b>를 바로 만들 수 있어요. 학생 정보는 이 기기 밖으로 나가지 않아요.</p>
+            <button type="button" class="btn btn-gold" data-open-class>우리 반 도구 열기</button>
         </div>
 
         <form id="fortuneForm" novalidate>
@@ -131,7 +152,7 @@
                 <p class="field-note" id="birthPreview"></p>
             </div>
             <div class="field">
-                <span class="cap">성별</span>
+                <span class="cap" id="capGender">성별</span>
                 <div class="seg" data-for="gender">
                     <button type="button" data-v="F" id="btnGenderF">여자</button>
                     <button type="button" data-v="M" id="btnGenderM">남자</button>
@@ -139,7 +160,7 @@
                 <input type="hidden" id="gender">
             </div>
             <div class="field">
-                <span class="cap">MBTI 성향 <button type="button" class="link-btn inline" id="btnMbtiQuiz">4문항으로 찾아보기</button></span>
+                <span class="cap"><span id="capMbtiText">MBTI 성향</span> <button type="button" class="link-btn inline" id="btnMbtiQuiz">4문항으로 찾아보기</button></span>
                 <div class="mbti-pick" id="mbtiPick">
                     <div class="seg" data-axis="0"><button type="button" data-v="E">E <small>외향</small></button><button type="button" data-v="I">I <small>내향</small></button></div>
                     <div class="seg" data-axis="1"><button type="button" data-v="S">S <small>감각</small></button><button type="button" data-v="N">N <small>직관</small></button></div>
@@ -161,7 +182,8 @@
                     <p class="hint" style="margin:8px 2px 0;">시간을 넣으면 여덟 글자를 모두 볼 수 있어요. 모르면 비워 두세요. 태어난 지역의 경도와 계절별 균시차를 반영해 실제 해의 위치(진태양시)로 정확히 계산합니다.</p>
                 </div>
             </details>
-            <label class="check"><input type="checkbox" id="rememberMe" checked> 다음에도 바로 볼 수 있게 기억하기 (이 기기에만 저장)</label>
+            <label class="check remember-wrap"><input type="checkbox" id="rememberMe" checked> 다음에도 바로 볼 수 있게 기억하기 (이 기기에만 저장)</label>
+            <p class="hint kiosk-only">🔒 공용 기기 모드라 입력한 정보는 이 화면을 닫거나 다음 친구로 넘기면 사라져요.</p>
             <p class="form-error" id="formError"></p>
             <button type="submit" class="btn btn-gold" id="btnSubmit">나의 별빛 나침반 열기</button>
         </form>
@@ -182,7 +204,16 @@
 
         <!-- ① 오늘 -->
         <div class="tab-panel" data-panel="today">
-            <div class="card omikuji" id="omikuji">
+            <div class="card i18n-card" id="i18nCard" hidden data-read>
+                <h3 class="card-title"><span id="i18nCardTitle"></span></h3>
+                <div id="i18nBody"></div>
+                <p class="small muted" id="i18nNote" style="margin:10px 0 0;"></p>
+            </div>
+            <div class="self-bday" id="selfBday" hidden>
+                <div><b id="selfBdayText"></b><small>나의 자연물 캐릭터가 담긴 생일 카드를 만들어 볼까요?</small></div>
+                <button type="button" class="btn btn-gold btn-sm" id="btnSelfBday">🎂 생일 카드</button>
+            </div>
+            <div class="card omikuji" id="omikuji" data-read>
                 <h3 class="card-title"><span id="omiTitleText">오늘의 별빛 뽑기</span> <button type="button" class="qm" data-term="omikuji" aria-label="용어 풀이">?</button></h3>
                 <div class="omi-stage" id="omiStage">
                     <button type="button" class="omi-cup" id="omiCup" aria-label="별빛 통 흔들기">
@@ -199,7 +230,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span><span id="todaySummaryTitle">오늘의 별빛 나침반</span> <button type="button" class="qm" data-term="sipsin" aria-label="용어 풀이">?</button></span><span class="sub" id="todayDate"></span></h3>
                 <div class="day-head">
                     <div class="hanja" id="dayHanja"></div>
@@ -215,7 +246,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title" id="themeCardTitle">오늘의 세 가지 별빛 지수</h3>
                 <div class="theme-list">
                     <div class="theme-box love">
@@ -236,7 +267,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title" id="adviceCardTitle">MBTI 맞춤 조언과 오늘의 다짐</h3>
                 <div class="mbti-box"><span class="mbti-badge" id="mbtiBadge"></span><span id="mbtiAdvice"></span></div>
                 <div class="mission" id="missionBox" role="button" tabindex="0" title="터치하면 마음일기에 오늘의 다짐으로 담깁니다"><b id="missionLabel">오늘의 작은 실천</b> · <span id="missionText"></span> <small class="copy-hint">📝 일기에 담기</small></div>
@@ -277,7 +308,7 @@
                 <p class="small muted" id="sajuNote" style="margin:10px 0 0;"></p>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span><span id="ilganCardTitle">나를 상징하는 자연물 캐릭터</span> <button type="button" class="qm" data-term="ilgan" aria-label="용어 풀이">?</button></span></h3>
                 <div class="ilgan">
                     <div class="ilgan-hanja" id="ilganHanja"></div>
@@ -291,10 +322,28 @@
                 <p class="small" style="margin:4px 0 0;"><b style="color:#ff8b7b;" id="ilganCautionLabel">더 자라날 점</b> · <span id="ilganCaution"></span></p>
             </div>
 
+            <!-- 🌟 학생용: 자연물 캐릭터 도감 모으기 -->
+            <div class="card student-only" id="dexCard">
+                <h3 class="card-title"><span id="dexTitleText">🌟 자연물 캐릭터 도감</span><span class="sub" id="dexProgress"></span></h3>
+                <div class="dex-track"><i id="dexBar"></i></div>
+                <p class="small" style="margin:8px 0 10px;">친구의 QR을 휴대폰 카메라로 찍거나 친구 코드를 넣으면, 친구의 캐릭터가 내 도감에 모여요. 10종을 모두 모아 볼까요?</p>
+                <div class="dex-grid" id="dexGrid"></div>
+                <div class="btn-row" style="margin-top:12px;">
+                    <button type="button" class="btn btn-gold" id="btnDexQr">📱 내 캐릭터 QR</button>
+                    <button type="button" class="btn btn-ghost" id="btnDexCode">⌨️ 친구 코드 넣기</button>
+                </div>
+                <div class="flex-row" id="dexCodeRow" hidden style="margin-top:10px;">
+                    <input type="text" id="dexCodeInput" placeholder="예: 바다-27" maxlength="12" autocomplete="off" aria-label="친구 코드">
+                    <button type="button" class="btn btn-gold btn-sm" id="btnDexCodeOk" style="flex:0 0 auto;">넣기</button>
+                </div>
+                <p class="small muted" style="margin:10px 0 0;">QR과 코드에는 이름·생일이 들어 있지 않고, 오늘만 쓸 수 있어요.</p>
+            </div>
+
             <!-- 🏫 선생님용 전용: 학생 이해 & 상담·칭찬 처방전 -->
             <div class="card teacher-only" id="teacherCoachCard">
                 <h3 class="card-title"><span>🏫 교사용 학생 이해 · 상담 처방전</span><span class="sub">학급경영·생활지도</span></h3>
                 <div class="coach-list" id="coachList"></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="btnReportCurrent" style="margin-top:12px;">📄 이 학생 상담 리포트 인쇄 (A4)</button>
             </div>
 
             <div class="card">
@@ -306,7 +355,7 @@
                 <p class="small" id="ohaengText" style="margin:12px 0 0; line-height:1.7;"></p>
             </div>
 
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title">MBTI × 자연물 기질 <span class="sub">타고난 기운과 지금의 성격</span></h3>
                 <div class="ilgan-title" id="crossName" style="color:var(--gold); margin-bottom:6px;"></div>
                 <p class="lead" id="crossText" style="font-size:0.95rem;"></p>
@@ -325,6 +374,7 @@
                     <div class="hd"><span id="wolunTitle"></span></div>
                     <div class="tx" id="wolunText"></div>
                 </div>
+                <button type="button" class="btn btn-ghost btn-sm" data-open-sim style="margin-top:12px;">☀️ 24절기 태양 여행 (지구 공전 시뮬레이터)</button>
             </div>
 
             <!-- 🏫 선생님용 전용: 사회·과학·수학 수업용 전통 책력 원리 -->
@@ -336,6 +386,7 @@
                     <button type="button" data-edu="solar">경도·진태양시</button>
                 </div>
                 <div class="edu-body" id="eduBody"></div>
+                <button type="button" class="btn btn-ghost btn-sm" data-open-sim style="margin-top:10px;">☀️ 수업용 태양 황경 시뮬레이터 열기 (전자칠판)</button>
             </div>
 
             <div class="card">
@@ -373,7 +424,7 @@
                 </form>
             </div>
 
-            <div class="card" id="compatResult" style="display:none;">
+            <div class="card" id="compatResult" style="display:none;" data-read>
                 <h3 class="card-title"><span><span id="compatResultTitle">두 사람의 우정 케미</span> <button type="button" class="qm" data-term="compat" aria-label="용어 풀이">?</button></span></h3>
                 <div class="gh-pair" id="ghPair"></div>
                 <div class="gh-score">
@@ -396,7 +447,7 @@
 
         <!-- ④ 상징 카드 / 힐링 타로 -->
         <div class="tab-panel" data-panel="tarot">
-            <div class="card">
+            <div class="card" data-read>
                 <h3 class="card-title"><span id="tarotTitleText">상징 이야기 · 마음 카드</span> <span class="sub" id="tarotSubText">22장 메이저 상징 카드</span></h3>
                 <div class="spread-select" id="spreadSelect"></div>
                 <div class="field"><input type="text" id="tarotQuestion" placeholder="고민이나 지어 보고 싶은 이야기 주제를 적어 보세요 (선택)" maxlength="60" autocomplete="off"></div>
@@ -404,6 +455,10 @@
                 <div class="deck-fan" id="deckFan"></div>
                 <div class="tarot-slots" id="tarotSlots"></div>
                 <div class="tarot-reading" id="tarotReading"></div>
+                <div class="center" id="sheetBtnWrap" hidden style="margin-top:12px;">
+                    <button type="button" class="btn btn-gold" id="btnStorySheet">✏️ 이야기 짓기 활동지 인쇄</button>
+                    <p class="small muted" style="margin:6px 0 0;">뽑은 카드로 A4 활동지를 만들어요. 인쇄 창에서 PDF로 저장할 수도 있어요.</p>
+                </div>
                 <div class="center" style="margin-top:12px;"><button type="button" class="btn btn-ghost btn-sm" id="btnTarotReset">카드 다시 섞기</button></div>
             </div>
         </div>
@@ -440,12 +495,119 @@
         </div>
 
         <button type="button" class="btn btn-ghost" id="btnReset">다른 사람 나침반 보기</button>
+        <button type="button" class="btn btn-ghost teacher-only class-entry" data-open-class style="margin-top:8px;">🏫 우리 반 도구 열기</button>
+    </section>
+
+    <!-- 🏫 우리 반 도구 (선생님용) -->
+    <section id="classView" style="display:none;">
+        <div class="class-head">
+            <button type="button" class="btn btn-ghost btn-sm" id="btnCloseClass">‹ 돌아가기</button>
+            <h2>🏫 우리 반 도구</h2>
+        </div>
+        <div class="class-tabs" id="classTabs" role="tablist">
+            <button type="button" data-ctab="roster" class="on">📋 명렬표</button>
+            <button type="button" data-ctab="groups">👥 모둠 편성</button>
+            <button type="button" data-ctab="board">📊 기질 분포</button>
+            <button type="button" data-ctab="birthday">🎂 생일</button>
+            <button type="button" data-ctab="report">📄 리포트</button>
+        </div>
+
+        <div class="class-panel" data-cpanel="roster">
+            <div class="card">
+                <h3 class="card-title"><span>명렬표 붙여 넣기</span><span class="sub" id="rosterSummary"></span></h3>
+                <p class="small" style="margin-top:0;">엑셀·한글 표에서 <b>번호 · 이름 · 생년월일 · 성별 · MBTI</b> 순서로 복사해 붙여 넣으세요. 성별·MBTI는 비워도 되고, 음력 생일은 날짜 앞에 <b>음</b>을 붙여 주세요. (예: <code>5 정이슬 음 2015.1.15 여</code>)</p>
+                <textarea id="rosterInput" rows="8" placeholder="1&#9;김하늘&#9;2015.03.04&#9;여&#9;ENFP&#10;2&#9;이바다&#9;2015.07.21&#9;남&#9;ISTJ" spellcheck="false"></textarea>
+                <label class="check"><input type="checkbox" id="rosterSave"> 이 기기에 명단 저장하기 (선생님 개인 기기에서만)</label>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-gold" id="btnRosterLoad">명단 불러오기</button>
+                    <button type="button" class="btn btn-ghost" id="btnRosterSample">예시 명단</button>
+                </div>
+                <ul class="roster-errors" id="rosterErrors"></ul>
+                <div id="rosterTable"></div>
+                <button type="button" class="link-btn" id="btnRosterClear">명단 지우기</button>
+            </div>
+            <div class="card">
+                <h3 class="card-title">🔒 학생들이 함께 쓰는 태블릿이라면</h3>
+                <p class="small" style="margin-top:0;">공용 기기 모드를 켜면 학생 정보가 기기에 남지 않고, ‘다음 친구’ 버튼과 3분 자동 초기화가 켜져요.</p>
+                <button type="button" class="btn btn-ghost" data-kiosk-on>공용 기기 모드 켜기</button>
+            </div>
+        </div>
+
+        <div class="class-panel" data-cpanel="groups" hidden>
+            <div class="card">
+                <h3 class="card-title">👥 모둠 자동 편성</h3>
+                <p class="class-empty small muted" hidden>먼저 📋 명렬표에서 명단을 불러와 주세요.</p>
+                <div class="flex-row field">
+                    <label class="cap" for="grpSize" style="flex:0 0 auto; margin:auto 0;">모둠 인원</label>
+                    <select id="grpSize"><option value="3">3명</option><option value="4" selected>4명</option><option value="5">5명</option><option value="6">6명</option></select>
+                </div>
+                <label class="check"><input type="checkbox" id="grpGender" checked> 남녀를 고르게 섞기</label>
+                <div class="field"><label class="cap" for="grpApart">떨어뜨릴 친구 (한 줄에 두 명)</label><textarea id="grpApart" rows="2" placeholder="김하늘, 이바다"></textarea></div>
+                <div class="field"><label class="cap" for="grpTogether">함께할 친구 (한 줄에 두 명)</label><textarea id="grpTogether" rows="2" placeholder="박나무, 최햇살"></textarea></div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-gold" id="btnMakeGroups">모둠 편성하기</button>
+                    <button type="button" class="btn btn-ghost" id="btnShuffleGroups">🔀 다시 섞기</button>
+                </div>
+                <p class="small muted" style="margin:8px 0 0;">자연물 기운 · 외향/내향 · 성별이 고르게 섞이고 서로 케미가 좋은 조합을 찾아요. 역할은 각자의 기운에서 추천해요.</p>
+                <p class="small form-error" id="groupNote"></p>
+            </div>
+            <div id="groupOut"></div>
+            <div class="btn-row" style="margin-bottom:16px;">
+                <button type="button" class="btn btn-ghost" id="btnCopyGroups">📋 복사</button>
+                <button type="button" class="btn btn-ghost" id="btnPrintGroups">🖨️ 편성표 인쇄</button>
+            </div>
+        </div>
+
+        <div class="class-panel" data-cpanel="board" hidden>
+            <div class="card" id="boardWrap">
+                <h3 class="card-title"><span>📊 우리 반 기질 분포</span><span class="sub">전자칠판용</span></h3>
+                <p class="class-empty small muted" hidden>먼저 📋 명렬표에서 명단을 불러와 주세요.</p>
+                <div class="board-tools">
+                    <label class="check" style="margin:0;"><input type="checkbox" id="boardShowNames"> 이름 보이기</label>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnBoardFull">⛶ 전체 화면</button>
+                </div>
+                <div id="boardOut"></div>
+            </div>
+        </div>
+
+        <div class="class-panel" data-cpanel="birthday" hidden>
+            <div class="card">
+                <h3 class="card-title"><span>🎂 다가오는 생일</span><span class="sub">
+                    <select id="bdayRange" class="sub-select" aria-label="기간"><option value="7">1주</option><option value="31" selected>한 달</option><option value="92">석 달</option><option value="366">1년</option></select></span></h3>
+                <p class="class-empty small muted" hidden>먼저 📋 명렬표에서 명단을 불러와 주세요.</p>
+                <ul class="bday-list" id="bdayList"></ul>
+                <p class="small muted" style="margin:8px 0 0;">음력 생일은 올해 양력 날짜로 바꿔 알려 줘요.</p>
+            </div>
+            <div class="card center" id="bdayCardWrap" hidden>
+                <h3 class="card-title">생일 축하 카드</h3>
+                <canvas id="bdayCanvas" class="bday-canvas" aria-label="생일 축하 카드 미리보기"></canvas>
+                <div class="field" style="margin-top:12px;"><input type="text" id="bdayMsg" maxlength="80" placeholder="축하 한마디 (비우면 강점을 담은 기본 문장)"></div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-gold" id="btnBdaySave">이미지 저장</button>
+                    <button type="button" class="btn btn-ghost" id="btnBdayPrint">🖨️ 인쇄</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="class-panel" data-cpanel="report" hidden>
+            <div class="card">
+                <h3 class="card-title">📄 학생 상담 리포트 (A4)</h3>
+                <p class="class-empty small muted" hidden>먼저 📋 명렬표에서 명단을 불러와 주세요.</p>
+                <div class="flex-row field"><select id="reportSelect" aria-label="학생 선택"></select></div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-gold" id="btnReportOne">🖨️ 이 학생 인쇄</button>
+                    <button type="button" class="btn btn-ghost" id="btnReportAll">전체 학생 인쇄</button>
+                </div>
+                <p class="small muted" style="margin:8px 0 0;">인쇄 창에서 ‘PDF로 저장’을 고르면 파일로 보관할 수 있어요. 교사용 참고 자료이니 외부에 공유하지 마세요.</p>
+            </div>
+            <div class="report-preview" id="reportPreview"></div>
+        </div>
     </section>
 
     <!-- 공통 하단: 입력·결과 화면 모두 표시 -->
     <footer class="site-footer">
         <p class="footer-note" id="footerNoteText">별빛 나침반은 나와 친구의 강점을 찾는 자기이해 도구입니다. 가장 중요한 나침반은 나의 선택과 마음가짐이에요!</p>
-        <p class="footer-note copyright">© 2026 엽쌤. All rights reserved. · <a href="https://gmlduqzhd123-lab.github.io/YScode/">엽쌤의 다른 앱 보기 →</a><span class="install-btn"> · <button type="button">📲 앱 설치</button></span><span class="qr-btn"> · <button type="button" data-qr>📱 QR로 접속</button></span></p>
+        <p class="footer-note copyright">© 2026 엽쌤. All rights reserved. · <a href="https://gmlduqzhd123-lab.github.io/YScode/">엽쌤의 다른 앱 보기 →</a><span class="install-btn"> · <button type="button">📲 앱 설치</button></span><span class="qr-btn"> · <button type="button" data-qr>📱 QR로 접속</button></span><span class="kiosk-link"> · <button type="button" data-kiosk-on>🔒 공용 기기 모드</button></span></p>
     </footer>
 </div>
 
@@ -461,6 +623,49 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ☀️ 24절기 태양 여행 시뮬레이터 -->
+<div class="modal-back" id="simView" hidden>
+    <div class="modal-card sim-card" role="dialog" aria-modal="true" aria-labelledby="simTitle">
+        <div class="sim-head">
+            <h3 id="simTitle">☀️ 24절기 태양 여행 <small id="simYear"></small></h3>
+            <button type="button" class="btn btn-ghost btn-sm" id="simClose" aria-label="닫기">✕</button>
+        </div>
+        <svg id="simSvg" class="sim-svg" viewBox="-170 -170 340 340" role="img" aria-label="태양 둘레를 도는 지구와 24절기 위치"></svg>
+        <div class="sim-info" id="simInfo" aria-live="polite"></div>
+        <input type="range" id="simRange" min="0" max="364" value="0" aria-label="날짜 옮기기">
+        <div class="btn-row">
+            <button type="button" class="btn btn-gold" id="simPlay">▶ 1년 돌려 보기</button>
+            <button type="button" class="btn btn-ghost" id="simToday">오늘로</button>
+        </div>
+        <p class="small muted" style="margin:10px 0 4px; text-align:left;">서울의 낮 길이 (1년)</p>
+        <svg id="simDayChart" class="sim-chart" viewBox="0 0 366 80" role="img" aria-label="서울의 1년 낮 길이 그래프"></svg>
+        <p class="small" style="text-align:left; line-height:1.7; margin:10px 0 0;">지구는 1년에 한 바퀴 태양 둘레를 돌아요. 태양이 하늘에서 지나는 길(황도)을 <b>15°씩 24칸</b>으로 나눈 것이 24절기예요. 지구의 자전축이 <b>23.4°</b> 기울어 있어서 하지에는 해가 높이 떠 낮이 길고, 동지에는 해가 낮게 떠 낮이 짧아요.</p>
+    </div>
+</div>
+
+<!-- 🌟 도감 QR -->
+<div class="modal-back" id="dexQrModal" hidden>
+    <div class="modal-card dex-qr-card" role="dialog" aria-modal="true" aria-labelledby="dexQrTitle">
+        <p class="small muted" style="margin:0;">친구가 휴대폰 카메라로 찍으면 내 캐릭터가 친구 도감에 들어가요</p>
+        <h4 id="dexQrTitle"></h4>
+        <div id="dexQrImg" class="dex-qr"></div>
+        <p class="dex-code">친구 코드 <b id="dexQrCode"></b></p>
+        <p class="small muted">이름·생일은 담기지 않아요 · 오늘만 쓸 수 있는 코드예요</p>
+        <button type="button" class="btn btn-ghost" id="dexQrClose">닫기</button>
+    </div>
+</div>
+
+<!-- 🎂 내 생일 카드 -->
+<div class="modal-back" id="bdayModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="생일 축하 카드">
+        <canvas id="selfBdayCanvas" class="bday-canvas" aria-label="생일 축하 카드"></canvas>
+        <div class="btn-row" style="margin-top:12px;">
+            <button type="button" class="btn btn-gold" id="btnSelfBdaySave">이미지 저장</button>
+            <button type="button" class="btn btn-ghost" id="btnSelfBdayClose">닫기</button>
+        </div>
+    </div>
+</div>
+
 <!-- 용어 풀이 시트 -->
 <div class="sheet-dim" id="sheetDim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -472,17 +677,29 @@
 
 <script src="js/vendor/korean-lunar-calendar.min.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/birth.js"></script>
 <script src="js/saju.js"></script>
 <script src="js/data/saju-data.js"></script>
 <script src="js/data/fortune-data.js"></script>
 <script src="js/fortune.js"></script>
 <script src="js/data/tarot-data.js"></script>
 <script src="js/data/extra-data.js"></script>
+<script src="js/worksheet.js"></script>
 <script src="js/tarot.js"></script>
 <script src="js/compat.js"></script>
 <script src="js/journal.js"></script>
 <script src="js/keepsake.js"></script>
 <script src="js/app.js"></script>
+<script src="js/print.js"></script>
+<script src="js/birthday-card.js"></script>
+<script src="js/classroom-logic.js"></script>
+<script src="js/classroom.js"></script>
+<script src="js/vendor/qrcode-generator.js"></script>
+<script src="js/dex.js"></script>
+<script src="js/solarsim.js"></script>
+<script src="js/data/i18n-data.js"></script>
+<script src="js/reader.js"></script>
+<script src="js/i18n.js"></script>
     <!-- 📱 오프라인 열기 (서비스 워커) — 설치 버튼은 ys-install.js가 맡음 -->
     <script>
     (function () {

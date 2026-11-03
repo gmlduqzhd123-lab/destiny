@@ -7,6 +7,10 @@ const App = (() => {
     const STORE_TONE = 'myeongun_tone';
     const STORE_MODE = 'starcompass_mode';
     const STORE_OMIKUJI = 'myeongun_omikuji';
+    const STORE_KIOSK = 'starcompass_kiosk';
+    // 공용 기기 모드에서는 개인 정보가 담기는 키를 기기에 쓰지 않고 메모리에만 둡니다.
+    const KIOSK_MEMORY_KEYS = [STORE_USER, STORE_OMIKUJI];
+    const KIOSK_IDLE_MS = 3 * 60 * 1000;
     const MBTI_TYPES = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'];
     const HISTORICAL_FIGURES = [
         { name: '세종대왕', birth: '1397.05.15' },
@@ -43,15 +47,37 @@ const App = (() => {
         profile: null,
         today: null,
         tab: 'today',
-        compat: null
+        compat: null,
+        kiosk: false
     };
+    let kioskMemory = {};
 
     // ---------- 저장소 (접근이 막힌 환경에서도 앱이 멈추지 않도록) ----------
     const store = {
-        get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } },
-        set(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* 무시 */ } },
-        remove(key) { try { localStorage.removeItem(key); } catch (e) { /* 무시 */ } }
+        get(key) {
+            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) return key in kioskMemory ? kioskMemory[key] : null;
+            try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+        },
+        set(key, v) {
+            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) { kioskMemory[key] = v; return; }
+            try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* 무시 */ }
+        },
+        remove(key) {
+            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) { delete kioskMemory[key]; return; }
+            try { localStorage.removeItem(key); } catch (e) { /* 무시 */ }
+        }
     };
+
+    // 공용 기기 모드 여부는 기기 설정이므로 메모리 저장 규칙과 상관없이 실제 저장소에 둡니다.
+    function readKioskFlag() {
+        try { return localStorage.getItem(STORE_KIOSK) === '1'; } catch (e) { return false; }
+    }
+
+    function writeKioskFlag(on) {
+        try {
+            if (on) localStorage.setItem(STORE_KIOSK, '1'); else localStorage.removeItem(STORE_KIOSK);
+        } catch (e) { /* 저장이 막힌 기기에서는 이번 접속 동안만 유지 */ }
+    }
 
     function isTeacher() {
         return state.mode === 'teacher';
@@ -62,53 +88,11 @@ const App = (() => {
         return (isTeacher() && FortuneData.mbti.teacherNick ? FortuneData.mbti.teacherNick[mbti] : FortuneData.mbti.nick[mbti]) || '';
     }
 
-    // ---------- 입력 검증 ----------
-    function normalizeBirth(raw) {
-        const str = String(raw || '').trim();
-        const cur = new Date().getFullYear() % 100;
-        const full = yy => (+yy <= cur ? '20' : '19') + yy;
-        if (/^\d{8}$/.test(str)) return str;
-        if (/^\d{6}$/.test(str)) return full(str.slice(0, 2)) + str.slice(2);
-        const m = str.match(/^(\d{4}|\d{2})\D+(\d{1,2})\D+(\d{1,2})\D*$/);
-        if (m) return (m[1].length === 2 ? full(m[1]) : m[1]) + m[2].padStart(2, '0') + m[3].padStart(2, '0');
-        return null;
-    }
-
-    function parseBirth(raw) {
-        const str = normalizeBirth(raw);
-        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 2015.05.05' };
-        const y = +str.slice(0, 4), m = +str.slice(4, 6), d = +str.slice(6, 8);
-        const date = new Date(y, m - 1, d);
-        if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
-            return { error: '존재하지 않는 날짜입니다. 다시 확인해 주세요.' };
-        }
-        if (y < 1000 || date > new Date()) return { error: '1000년 이후, 오늘 이전의 날짜를 입력해 주세요.' };
-        return { y, m, d, ymd: str };
-    }
-
-    function resolveBirth(raw, cal) {
-        if (cal !== 'lunar' && cal !== 'leap') return parseBirth(raw);
-        const str = normalizeBirth(raw);
-        if (!str) return { error: '생년월일을 알아볼 수 없어요. 예: 2015.05.05' };
-        const ly = +str.slice(0, 4), lm = +str.slice(4, 6), ld = +str.slice(6, 8);
-        if (ly < 1900 || lm < 1 || lm > 12 || ld < 1 || ld > 30) return { error: '음력 날짜를 다시 확인해 주세요. (1900년 이후, 1~12월, 1~30일)' };
-        const leap = cal === 'leap';
-        let solar = null;
-        try {
-            const conv = new KoreanLunarCalendar();
-            if (conv.setLunarDate(ly, lm, ld, leap)) solar = conv.getSolarCalendar();
-        } catch (e) { /* 아래에서 오류로 처리 */ }
-        if (!solar) {
-            return { error: leap ? `${ly}년에는 윤${lm}월 ${ld}일이 없어요. 윤달 여부와 날짜를 확인해 주세요.` : '음력에 없는 날짜예요. 날짜를 다시 확인해 주세요.' };
-        }
-        const b = parseBirth(`${solar.year}${String(solar.month).padStart(2, '0')}${String(solar.day).padStart(2, '0')}`);
-        if (b.error) return b;
-        return { ...b, lunar: str, leap };
-    }
-
-    function formatBirth(ymd) {
-        return `${ymd.slice(0, 4)}.${ymd.slice(4, 6)}.${ymd.slice(6, 8)}`;
-    }
+    // ---------- 입력 검증 (js/birth.js) ----------
+    const normalizeBirth = Birth.normalize;
+    const parseBirth = Birth.parse;
+    const resolveBirth = Birth.resolve;
+    const formatBirth = Birth.format;
 
     function birthLabel(u) {
         return u.cal === 'lunar' ? `음력 ${formatBirth(u.lunar)}${u.leap ? '(윤달)' : ''}` : formatBirth(u.birth);
@@ -390,6 +374,12 @@ const App = (() => {
         if (state.user && state.today) {
             renderAll();
         }
+        i18nRefresh();
+    }
+
+    // 다른 언어 화면일 때 앱이 다시 채운 한국어 글자를 번역으로 바꿉니다.
+    function i18nRefresh() {
+        if (typeof I18n !== 'undefined') I18n.refresh();
     }
 
     // ---------- 입력 전 첫 화면 ----------
@@ -520,6 +510,29 @@ const App = (() => {
             <div style="grid-column: span 2;"><b>추천 간식·음식</b><span>${e.food}</span></div>`;
     }
 
+    // 오늘이 생일이면(음력 생일은 올해 양력 날짜로 바꿔서) 축하 배너를 보여 줍니다.
+    function renderSelfBirthday() {
+        const u = state.user, now = new Date();
+        let isToday = false;
+        try {
+            const d = ClassroomLogic.birthdayIn(now.getFullYear(), u);
+            isToday = d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+        } catch (e) { /* 계산할 수 없으면 배너 없음 */ }
+        $('selfBday').hidden = !isToday;
+        if (isToday) $('selfBdayText').textContent = `🎉 오늘은 ${u.name}${isTeacher() ? ' 님' : ''}의 생일이에요! 축하해요!`;
+    }
+
+    async function openSelfBirthday() {
+        const u = state.user, p = state.profile, s = p.saju.day.stem;
+        $('bdayModal').hidden = false;
+        await BirthdayCard.draw($('selfBdayCanvas'), {
+            name: u.name, hanja: s.hanja, el: s.el, title: p.ilgan.title, strength: p.ilgan.strength,
+            term: ClassroomLogic.birthTermName(u.birth),
+            dateLabel: u.cal === 'lunar' ? `음력 ${+u.lunar.slice(4, 6)}월 ${+u.lunar.slice(6, 8)}일` : `${+u.birth.slice(4, 6)}월 ${+u.birth.slice(6, 8)}일`,
+            message: `${u.name}의 ${p.ilgan.strength.split(' · ')[0]}이 세상을 더 반짝이게 해요. 새로운 한 해도 나답게 빛나길!`
+        });
+    }
+
     function todayGrade() {
         const avg = Fortune.average(state.today.scores);
         return ExtraData.grades.find(gr => avg >= gr.min);
@@ -560,6 +573,7 @@ const App = (() => {
             store.set(STORE_OMIKUJI, all);
             renderOmikuji();
             renderKeepsake();
+            i18nRefresh();
         }, 900);
     }
 
@@ -851,10 +865,12 @@ const App = (() => {
     function renderAll() {
         renderHeader();
         renderToday();
+        renderSelfBirthday();
         renderOmikuji();
         renderSaju();
         renderCompat();
         renderKeepsake();
+        i18nRefresh();
     }
 
     // ---------- 탭 ----------
@@ -877,7 +893,8 @@ const App = (() => {
         document.body.classList.add('result-mode');
         $('tabbar').style.display = 'flex';
         Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
-        Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
+        if (typeof Dex !== 'undefined') Dex.setMine(state.profile.saju.day.stem.i);
+        if (!state.kiosk) Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
         state.compat = null;
         $('compatResult').style.display = 'none';
         $('reframeText').style.display = 'none';
@@ -940,6 +957,112 @@ const App = (() => {
         copyText(text + '\n' + appUrl(), '결과가 복사되었습니다. 원하는 곳에 붙여 넣어 주세요.');
     }
 
+    // ---------- 공용 기기(태블릿) 모드 ----------
+    function applyKiosk() {
+        document.body.classList.toggle('kiosk', state.kiosk);
+        $('kioskBar').hidden = !state.kiosk;
+        if (state.kiosk) {
+            $('rememberMe').checked = false;
+            $('welcomeCard').style.display = 'none';
+            if ($('inputView').style.display !== 'none') showForm();
+            if (state.tab === 'journal') switchTab('today');
+        }
+    }
+
+    function enableKiosk() {
+        if (state.kiosk) return;
+        const ok = window.confirm('공용 기기 모드를 켤까요?\n\n· 이름·생일 같은 정보가 이 기기에 저장되지 않아요.\n· "다음 친구" 버튼이나 3분 동안 쓰지 않으면 처음 화면으로 돌아가요.\n· 이 기기에 기억된 정보는 지금 지워져요.');
+        if (!ok) return;
+        try { localStorage.removeItem(STORE_USER); localStorage.removeItem(STORE_OMIKUJI); } catch (e) { /* 무시 */ }
+        // 마음 일기 기록에는 이름·생일이 들어 있어 다음 사람이 볼 수 있으므로 지울지 한 번 더 묻습니다.
+        const diaryPeople = Journal.peopleCount();
+        if (diaryPeople > 0 && window.confirm(`이 기기에 마음 일기·교단 일지 기록이 ${diaryPeople}명분 남아 있어요.\n공용 기기에서는 다른 사람이 볼 수 있으니 지울까요?\n(지우면 되돌릴 수 없어요)`)) {
+            Journal.clearAll();
+        }
+        state.kiosk = true;
+        kioskMemory = {};
+        writeKioskFlag(true);
+        applyKiosk();
+        nextPerson();
+        toast('🔒 공용 기기 모드를 켰어요. 정보가 저장되지 않아요.');
+    }
+
+    function disableKiosk() {
+        if (!window.confirm('공용 기기 모드를 끌까요? 끄면 다시 정보를 기기에 기억할 수 있어요.')) return;
+        state.kiosk = false;
+        kioskMemory = {};
+        writeKioskFlag(false);
+        applyKiosk();
+        $('rememberMe').checked = true;
+        toast('공용 기기 모드를 껐어요.');
+    }
+
+    // 다음 사람이 앞 사람의 정보를 볼 수 없도록 화면과 입력값을 모두 비웁니다.
+    function nextPerson(reason) {
+        kioskMemory = {};
+        state.user = null;
+        state.profile = null;
+        state.today = null;
+        state.compat = null;
+        $('fortuneForm').reset();
+        $('rememberMe').checked = !state.kiosk;
+        setCal('solar');
+        setGender('');
+        setMbti('');
+        $('mbtiQuiz').style.display = 'none';
+        $('mbtiPick').style.display = '';
+        $('birthPlace').value = 'seoul';
+        $('timeMore').open = false;
+        $('timePreview').textContent = '';
+        $('formError').textContent = '';
+        $('compatForm').reset();
+        $('pBirthPreview').textContent = '';
+        $('compatError').textContent = '';
+        $('compatResult').style.display = 'none';
+        $('memoText').value = '';
+        const q = $('tarotQuestion');
+        if (q.value) { q.value = ''; q.dispatchEvent(new Event('change')); }
+        Keepsake.clearStamps();
+        closeSheet();
+        document.dispatchEvent(new CustomEvent('starcompass:reset'));
+        showInput();
+        birthPreview($('birthDate'), $('birthPreview'), 'solar');
+        if (reason === 'idle') toast('3분 동안 쓰지 않아 처음 화면으로 돌아왔어요.');
+        else if (state.kiosk) toast('다음 친구 차례예요! 🌟');
+    }
+
+    function startIdleWatch() {
+        let last = Date.now();
+        const touch = () => { last = Date.now(); };
+        ['pointerdown', 'keydown', 'input', 'wheel'].forEach(ev => document.addEventListener(ev, touch, { passive: true, capture: true }));
+        setInterval(() => {
+            if (!state.kiosk || Date.now() - last < KIOSK_IDLE_MS) return;
+            const inUse = $('resultView').style.display === 'block' || $('userName').value || $('birthDate').value;
+            last = Date.now();
+            if (inUse) nextPerson('idle');
+        }, 10000);
+    }
+
+    function bindKiosk() {
+        document.addEventListener('click', e => {
+            if (e.target.closest('[data-kiosk-on]')) { e.preventDefault(); enableKiosk(); }
+        });
+        $('btnNextPerson').addEventListener('click', () => nextPerson());
+        // 학생이 실수로 끄지 않도록 2초 동안 꾹 눌러야 해제합니다.
+        const off = $('btnKioskOff');
+        let pressTimer = null, fired = false;
+        const cancel = () => { clearTimeout(pressTimer); pressTimer = null; off.classList.remove('pressing'); };
+        off.addEventListener('pointerdown', () => {
+            fired = false;
+            off.classList.add('pressing');
+            pressTimer = setTimeout(() => { fired = true; cancel(); disableKiosk(); }, 2000);
+        });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => off.addEventListener(ev, cancel));
+        off.addEventListener('click', () => { if (!fired) toast('끄려면 [해제] 버튼을 2초 동안 꾹 눌러 주세요.'); });
+        off.addEventListener('keydown', e => { if (e.key === 'Enter' && e.shiftKey) disableKiosk(); });
+        startIdleWatch();
+    }
+
     // ---------- 초기화 ----------
     function bind() {
         document.querySelectorAll('#modeSwitch button').forEach(b => b.addEventListener('click', () => {
@@ -954,6 +1077,11 @@ const App = (() => {
             renderEduTopic();
         }));
 
+        $('btnReportCurrent').addEventListener('click', () => Classroom.printCurrent(state.user));
+        $('btnSelfBday').addEventListener('click', openSelfBirthday);
+        $('btnSelfBdaySave').addEventListener('click', () => BirthdayCard.download($('selfBdayCanvas'), `생일카드_${state.user.name}.png`));
+        $('btnSelfBdayClose').addEventListener('click', () => { $('bdayModal').hidden = true; });
+        $('bdayModal').addEventListener('click', e => { if (e.target === $('bdayModal')) $('bdayModal').hidden = true; });
         $('coachList').addEventListener('click', e => {
             const item = e.target.closest('.coach-item[data-copy]');
             if (item) copyText(item.dataset.copy, '📋 코칭·행발 문구가 복사되었습니다. 상담·행발 기록에 붙여 넣어 보세요.');
@@ -989,8 +1117,8 @@ const App = (() => {
             $('formError').textContent = r.error || '';
             if (r.error) return;
             state.user = r.user;
-            if ($('rememberMe').checked) store.set(STORE_USER, r.user);
-            else store.remove(STORE_USER);
+            if ($('rememberMe').checked && !state.kiosk) store.set(STORE_USER, r.user);
+            else if (!state.kiosk) store.remove(STORE_USER);
             showResult();
         });
 
@@ -1105,16 +1233,24 @@ const App = (() => {
             $('inviteBanner').textContent = '개인정보 보호를 위해 이전 초대 링크의 정보는 불러오지 않습니다. 두 사람의 케미는 서로 동의한 정보를 직접 입력해 확인해 주세요.';
             $('inviteBanner').style.display = 'block';
         }
-        const saved = store.get(STORE_USER);
+        state.kiosk = readKioskFlag();
+        applyKiosk();
+        const saved = state.kiosk ? null : store.get(STORE_USER);
         if (saved && saved.name && saved.birth && saved.gender && saved.mbti) {
             fillForm(saved);
             showWelcome(saved);
         }
         state.tone = store.get(STORE_TONE) === 'direct' ? 'direct' : 'gentle';
         bind();
+        bindKiosk();
     }
 
     document.addEventListener('DOMContentLoaded', init);
 
-    return { state, store, toast, copyText, appUrl, switchTab, setMode };
+    const isKiosk = () => state.kiosk;
+
+    return {
+        state, store, toast, copyText, appUrl, switchTab, setMode, isKiosk, enableKiosk, nextPerson, isOmikujiDrawn,
+        normalizeBirth, parseBirth, resolveBirth, formatBirth, escapeHtml, isTeacher, mbtiNick
+    };
 })();

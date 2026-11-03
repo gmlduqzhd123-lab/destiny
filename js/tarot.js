@@ -120,6 +120,7 @@ const Tarot = (() => {
         }
         $('tarotReading').innerHTML = (ctx.question.trim() ? `<p class="small muted" style="margin:0 0 8px;">주제·질문 · ${escapeHtml(ctx.question.trim())}</p>` : '') + items.join('');
         $('deckGuide').textContent = ctx.flipped.size === pos.length ? '카드가 전하는 이야기를 읽어 보세요.' : '남은 카드도 뒤집어 보세요.';
+        updateSheetButton();
     }
 
     function summary() {
@@ -154,9 +155,37 @@ const Tarot = (() => {
         return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
+    function isComplete() {
+        return ctx.picks.length > 0 && ctx.picks.length === spread().positions.length && ctx.flipped.size === ctx.picks.length;
+    }
+
+    // 카드를 모두 뒤집으면 활동지 인쇄 버튼을 보여 줍니다.
+    function updateSheetButton() {
+        const wrap = $('sheetBtnWrap');
+        if (!wrap) return;
+        wrap.hidden = !isComplete();
+        if (isComplete()) $('btnStorySheet').textContent = Worksheet.label(ctx.spread, ctx.picks.length);
+    }
+
+    /** 활동지·읽어 주기에 쓰는 뽑은 카드 정보 */
+    function pickedDetails() {
+        const pos = spread().positions;
+        return ctx.picks.map((di, k) => {
+            const { card, rev } = ctx.deck[di];
+            return { pos: pos[k], title: cardTitle(card), en: card.en, roman: card.roman, kw: card.kw, sym: card.sym, rev };
+        });
+    }
+
+    function printSheet() {
+        if (!isComplete()) return;
+        const w = Worksheet.build({ spread: ctx.spread, cards: pickedDetails(), question: ctx.question.trim() });
+        Printer.print(w.html, w.title);
+    }
+
     function reset() {
         buildDeck();
         renderFan();
+        updateSheetButton();
     }
 
     function setUser(key, date) {
@@ -183,6 +212,7 @@ const Tarot = (() => {
             reset();
         });
         $('btnTarotReset').addEventListener('click', reset);
+        $('btnStorySheet').addEventListener('click', printSheet);
         $('tarotReading').addEventListener('click', e => {
             const box = e.target.closest('.tarot-item[data-copy]');
             if (box && typeof App !== 'undefined' && App.copyText) {
@@ -195,5 +225,5 @@ const Tarot = (() => {
         return ctx.picks.filter((_, k) => ctx.flipped.has(k)).map(i => cardTitle(ctx.deck[i].card) + (ctx.deck[i].rev ? '(역)' : ''));
     }
 
-    return { init, setUser, setMode, pickedSummary };
+    return { init, setUser, setMode, pickedSummary, pickedDetails, isComplete };
 })();
