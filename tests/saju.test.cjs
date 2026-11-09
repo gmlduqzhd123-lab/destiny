@@ -84,3 +84,11 @@ test('대운은 10개이고 10년 간격', () => {
     assert.equal(dw.list[1].age - dw.list[0].age, 10);
     assert.equal(dw.forward, true); // 庚(양간)년 남성 순행
 });
+
+test('만 나이: 생일이 지나지 않았으면 한 살 적다 (기질 탭 10년 흐름 기준)', () => {
+    const { load: loadMore, CORE: core } = require('./helpers/load.cjs');
+    const SajuView = loadMore([...core, 'js/saju-view.js']).get('SajuView');
+    assert.equal(SajuView.ageOn('20150505', new Date(2026, 4, 4)), 10);
+    assert.equal(SajuView.ageOn('20150505', new Date(2026, 4, 5)), 11);
+    assert.equal(SajuView.ageOn('20151231', new Date(2026, 0, 1)), 10);
+});

@@ -64,7 +64,7 @@ const Classroom = (() => {
     }
 
     function switchTab(tab) {
-        document.querySelectorAll('#classTabs button').forEach(b => b.classList.toggle('on', b.dataset.ctab === tab));
+        document.querySelectorAll('#classTabs button').forEach(b => { b.classList.toggle('on', b.dataset.ctab === tab); b.setAttribute('aria-selected', String(b.dataset.ctab === tab)); });
         document.querySelectorAll('.class-panel').forEach(p => { p.hidden = p.dataset.cpanel !== tab; });
         if (tab !== 'roster' && !st.people.length) {
             document.querySelector(`.class-panel[data-cpanel="${tab}"] .class-empty`)?.removeAttribute('hidden');

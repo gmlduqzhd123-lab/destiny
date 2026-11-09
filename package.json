@@ -8,6 +8,7 @@
     "serve": "node tests/e2e/server.cjs"
   },
   "devDependencies": {
-    "@playwright/test": "1.56.1"
+    "@playwright/test": "1.56.1",
+    "axe-core": "4.14.0"
   }
 }

@@ -60,9 +60,8 @@
 
     <!-- 본문 글꼴 Pretendard (SIL OFL 1.1) — 외부 CDN 없이 사이트에 함께 담아 어디서나 같은 글꼴로 보이게 -->
     <link rel="stylesheet" href="fonts/pretendard/pretendardvariable-dynamic-subset.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
+    <!-- 제목 글꼴 고운바탕 (SIL OFL 1.1) — 학교망에서 외부 글꼴이 막혀도 보이도록 사이트에 함께 담음 -->
+    <link rel="stylesheet" href="fonts/gowun-batang/gowun-batang.css">
     <link rel="stylesheet" href="css/style.css">
     <!-- 📱 앱처럼 설치 (홈 화면에 추가) -->
     <link rel="manifest" href="manifest.webmanifest">
@@ -326,10 +325,11 @@
             <div class="card student-only" id="dexCard">
                 <h3 class="card-title"><span id="dexTitleText">🌟 자연물 캐릭터 도감</span><span class="sub" id="dexProgress"></span></h3>
                 <div class="dex-track"><i id="dexBar"></i></div>
-                <p class="small" style="margin:8px 0 10px;">친구의 QR을 휴대폰 카메라로 찍거나 친구 코드를 넣으면, 친구의 캐릭터가 내 도감에 모여요. 10종을 모두 모아 볼까요?</p>
+                <p class="small" style="margin:8px 0 10px;">친구의 QR을 찍거나 친구 코드를 넣으면, 친구의 캐릭터가 내 도감에 모여요. 10종을 모두 모아 볼까요?</p>
                 <div class="dex-grid" id="dexGrid"></div>
                 <div class="btn-row" style="margin-top:12px;">
                     <button type="button" class="btn btn-gold" id="btnDexQr">📱 내 캐릭터 QR</button>
+                    <button type="button" class="btn btn-ghost" id="btnDexScan">📷 친구 QR 찍기</button>
                     <button type="button" class="btn btn-ghost" id="btnDexCode">⌨️ 친구 코드 넣기</button>
                 </div>
                 <div class="flex-row" id="dexCodeRow" hidden style="margin-top:10px;">
@@ -364,7 +364,7 @@
 
             <div class="card">
                 <h3 class="card-title"><span>시간과 계절의 흐름 <button type="button" class="qm" data-term="daewoon" aria-label="용어 풀이">?</button></span><span class="sub" id="dwSub"></span></h3>
-                <div class="daewoon" id="dwList"></div>
+                <div class="daewoon" id="dwList" tabindex="0" role="region" aria-label="10년 흐름 목록 (옆으로 넘겨 보기)"></div>
                 <p class="small" id="dwNow" style="margin:10px 0 14px; line-height:1.7;"></p>
                 <div class="gh-item">
                     <div class="hd"><span id="seunTitle"></span></div>
@@ -401,23 +401,23 @@
             <div class="card" id="compatFormCard">
                 <h3 class="card-title"><span id="compatFormTitle">짝꿍 · 모둠 우정 케미 보기</span> <span class="sub" id="compatFormSub">친구의 정보를 입력해 주세요</span></h3>
                 <form id="compatForm" novalidate>
-                    <div class="field"><input type="text" id="pName" placeholder="친구(상대) 이름" autocomplete="off" maxlength="20"></div>
+                    <div class="field"><input type="text" id="pName" aria-label="친구 이름" placeholder="친구(상대) 이름" autocomplete="off" maxlength="20"></div>
                     <div class="flex-row field">
                         <select id="pCal" style="flex:0 0 96px;" aria-label="상대 생일 달력">
                             <option value="solar">양력</option>
                             <option value="lunar">음력</option>
                             <option value="leap">음력 윤달</option>
                         </select>
-                        <input type="text" id="pBirth" placeholder="생년월일 (예: 2015.05.05)" inputmode="numeric" maxlength="14" autocomplete="off">
+                        <input type="text" id="pBirth" aria-label="친구 생년월일" placeholder="생년월일 (예: 2015.05.05)" inputmode="numeric" maxlength="14" autocomplete="off">
                     </div>
                     <p class="field-note" id="pBirthPreview" style="margin:-6px 2px 10px;"></p>
                     <div class="flex-row field">
-                        <select id="pGender">
+                        <select id="pGender" aria-label="친구 성별">
                             <option value="" disabled selected>성별</option>
                             <option value="M" id="optPGenderM">남자</option>
                             <option value="F" id="optPGenderF">여자</option>
                         </select>
-                        <select id="pMbti"></select>
+                        <select id="pMbti" aria-label="친구 MBTI"></select>
                     </div>
                     <p class="form-error" id="compatError"></p>
                     <button type="submit" class="btn btn-gold" id="btnCompatSubmit">우정 케미 확인하기</button>
@@ -480,6 +480,7 @@
                 <div class="cal" id="calGrid"></div>
                 <div class="log-detail" id="logDetail"></div>
                 <p class="small muted center" style="margin:12px 0 0;">달력 도장에는 그날의 별빛 기운이 새겨집니다. 기록은 이 기기에만 안전하게 저장됩니다.</p>
+                <button type="button" class="btn btn-ghost btn-sm" data-backup style="margin-top:10px;">💾 기록 파일로 옮기기 (새 기기·백업)</button>
             </div>
 
             <div class="card memo-area">
@@ -504,12 +505,12 @@
             <button type="button" class="btn btn-ghost btn-sm" id="btnCloseClass">‹ 돌아가기</button>
             <h2>🏫 우리 반 도구</h2>
         </div>
-        <div class="class-tabs" id="classTabs" role="tablist">
-            <button type="button" data-ctab="roster" class="on">📋 명렬표</button>
-            <button type="button" data-ctab="groups">👥 모둠 편성</button>
-            <button type="button" data-ctab="board">📊 기질 분포</button>
-            <button type="button" data-ctab="birthday">🎂 생일</button>
-            <button type="button" data-ctab="report">📄 리포트</button>
+        <div class="class-tabs" id="classTabs" role="tablist" aria-label="우리 반 도구 메뉴">
+            <button type="button" data-ctab="roster" class="on" role="tab" aria-selected="true">📋 명렬표</button>
+            <button type="button" data-ctab="groups" role="tab" aria-selected="false">👥 모둠 편성</button>
+            <button type="button" data-ctab="board" role="tab" aria-selected="false">📊 기질 분포</button>
+            <button type="button" data-ctab="birthday" role="tab" aria-selected="false">🎂 생일</button>
+            <button type="button" data-ctab="report" role="tab" aria-selected="false">📄 리포트</button>
         </div>
 
         <div class="class-panel" data-cpanel="roster">
@@ -607,11 +608,11 @@
     <!-- 공통 하단: 입력·결과 화면 모두 표시 -->
     <footer class="site-footer">
         <p class="footer-note" id="footerNoteText">별빛 나침반은 나와 친구의 강점을 찾는 자기이해 도구입니다. 가장 중요한 나침반은 나의 선택과 마음가짐이에요!</p>
-        <p class="footer-note copyright">© 2026 엽쌤. All rights reserved. · <a href="https://gmlduqzhd123-lab.github.io/YScode/">엽쌤의 다른 앱 보기 →</a><span class="install-btn"> · <button type="button">📲 앱 설치</button></span><span class="qr-btn"> · <button type="button" data-qr>📱 QR로 접속</button></span><span class="kiosk-link"> · <button type="button" data-kiosk-on>🔒 공용 기기 모드</button></span></p>
+        <p class="footer-note copyright">© 2026 엽쌤. All rights reserved. · <a href="https://gmlduqzhd123-lab.github.io/YScode/">엽쌤의 다른 앱 보기 →</a><span class="install-btn"> · <button type="button">📲 앱 설치</button></span><span class="qr-btn"> · <button type="button" data-qr>📱 QR로 접속</button></span><span class="kiosk-link"> · <button type="button" data-backup>💾 내 기록 옮기기</button></span><span class="kiosk-link"> · <button type="button" data-kiosk-on>🔒 공용 기기 모드</button></span></p>
     </footer>
 </div>
 
-<nav class="tabbar" id="tabbar">
+<nav class="tabbar" id="tabbar" aria-label="결과 메뉴">
     <div class="tabbar-inner">
         <button type="button" data-tab="today"><span class="ic">今</span><span id="tabLabelToday">오늘</span></button>
         <button type="button" data-tab="saju"><span class="ic">星</span><span id="tabLabelSaju">기질</span></button>
@@ -621,7 +622,7 @@
     </div>
 </nav>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- ☀️ 24절기 태양 여행 시뮬레이터 -->
 <div class="modal-back" id="simView" hidden>
@@ -652,6 +653,42 @@
         <p class="dex-code">친구 코드 <b id="dexQrCode"></b></p>
         <p class="small muted">이름·생일은 담기지 않아요 · 오늘만 쓸 수 있는 코드예요</p>
         <button type="button" class="btn btn-ghost" id="dexQrClose">닫기</button>
+    </div>
+</div>
+
+<!-- 🔄 새 버전 알림 -->
+<div class="update-bar" id="updateBar" role="status" hidden>
+    <span>✨ 별빛 나침반 새 버전이 준비됐어요.</span>
+    <button type="button" id="btnUpdateReload">새로고침</button>
+    <button type="button" id="btnUpdateLater" aria-label="나중에">✕</button>
+</div>
+
+<!-- 📷 앱 안 QR 찍기 -->
+<div class="modal-back" id="scanModal" hidden>
+    <div class="modal-card scan-card" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+        <h4 id="scanTitle">📷 QR 찍기</h4>
+        <p class="small muted" id="scanHint" style="margin:0 0 10px;"></p>
+        <div class="scan-frame"><video id="scanVideo" muted playsinline aria-label="카메라 화면"></video><i class="scan-box" aria-hidden="true"></i></div>
+        <p class="small" id="scanStatus" role="status" aria-live="polite" style="margin:10px 0;"></p>
+        <p class="small muted" style="margin:0 0 10px;">카메라 화면은 이 기기 안에서만 읽고 저장하지 않아요.</p>
+        <button type="button" class="btn btn-ghost" id="scanClose">닫기</button>
+    </div>
+</div>
+
+<!-- 💾 내 기록 내보내기·불러오기 -->
+<div class="modal-back" id="backupModal" hidden>
+    <div class="modal-card backup-card" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
+        <h4 id="backupTitle">💾 내 기록 옮기기</h4>
+        <p class="small" style="margin:0 0 6px;">이 기기에 있는 기록: <b id="backupNow"></b></p>
+        <p class="small muted" style="margin:0 0 12px; line-height:1.6;">기록은 이 기기의 브라우저에만 있어서, 방문 기록을 지우거나 기기를 바꾸면 사라져요. 파일로 내보내 두었다가 새 기기에서 불러오세요. 불러오면 지금 기록에 <b>합쳐지고</b>, 있던 기록은 지워지지 않아요.</p>
+        <div class="btn-row">
+            <button type="button" class="btn btn-gold" id="btnBackupExport">⬇️ 파일로 내보내기</button>
+            <button type="button" class="btn btn-ghost" id="btnBackupImport">⬆️ 파일 불러오기</button>
+        </div>
+        <input type="file" id="backupFile" accept="application/json,.json" hidden aria-label="백업 파일 고르기">
+        <p class="backup-result" id="backupResult" role="status" aria-live="polite" hidden></p>
+        <p class="small muted" style="margin:12px 0 10px;">⚠️ 파일에는 이름·생일·일기가 담겨요. 메신저·공유 폴더에 올리지 말고 나만 볼 수 있는 곳에 두세요. 서버로는 아무것도 보내지 않아요.</p>
+        <button type="button" class="btn btn-ghost" id="backupClose">닫기</button>
     </div>
 </div>
 
@@ -689,13 +726,20 @@
 <script src="js/compat.js"></script>
 <script src="js/journal.js"></script>
 <script src="js/keepsake.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/form.js"></script>
+<script src="js/saju-view.js"></script>
+<script src="js/kiosk.js"></script>
 <script src="js/app.js"></script>
 <script src="js/print.js"></script>
 <script src="js/birthday-card.js"></script>
 <script src="js/classroom-logic.js"></script>
 <script src="js/classroom.js"></script>
 <script src="js/vendor/qrcode-generator.js"></script>
+<script src="js/scanner.js"></script>
 <script src="js/dex.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/update.js"></script>
 <script src="js/solarsim.js"></script>
 <script src="js/data/i18n-data.js"></script>
 <script src="js/reader.js"></script>
