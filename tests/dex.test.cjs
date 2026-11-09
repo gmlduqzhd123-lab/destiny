@@ -36,3 +36,11 @@ test('배지 단계', () => {
     assert.match(Dex.badgeFor(3), /새싹/);
     assert.match(Dex.badgeFor(10), /박사/);
 });
+
+test('앱 안 카메라로 읽은 도감 주소·코드에서 코드만 꺼낸다', () => {
+    assert.equal(Dex.codeFromScan('https://gmlduqzhd123-lab.github.io/destiny/?dex=8-27'), '8-27');
+    assert.equal(Dex.codeFromScan('https://example.com/a?x=1&dex=3-45#top'), '3-45');
+    assert.equal(Dex.codeFromScan('  바다-27 '), '바다-27');
+    assert.equal(Dex.codeFromScan('https://example.com/아주-긴-다른-주소'), '');
+    assert.equal(Dex.codeFromScan(''), '');
+});

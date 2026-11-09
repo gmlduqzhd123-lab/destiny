@@ -45,6 +45,14 @@ const Dex = (() => {
         return num === dayNumber(idx, date) || num === dayNumber(idx, yesterday) ? idx : null;
     }
 
+    /** 앱 안 카메라로 읽은 글자(도감 주소 또는 코드)에서 코드만 꺼냅니다. 다른 사이트 주소로 이동하지 않습니다. */
+    function codeFromScan(text) {
+        const s = String(text || '').trim();
+        const m = s.match(/[?&]dex=([^&#\s]+)/);
+        if (m) { try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; } }
+        return s.length <= 16 ? s : '';
+    }
+
     function badgeFor(count) {
         const b = BADGES.find(([n]) => count >= n);
         return b ? b[1] : '';
@@ -126,6 +134,24 @@ const Dex = (() => {
         celebrate(idx, add(idx));
     }
 
+    function scan() {
+        if (kiosk()) { App.toast('공용 기기 모드에서는 도감이 저장되지 않아요.'); return; }
+        Scanner.open({
+            title: '📷 친구 캐릭터 QR 찍기',
+            hint: '친구 화면의 도감 QR을 네모 칸 안에 맞춰 주세요.',
+            onText: text => {
+                const idx = parseCode(codeFromScan(text));
+                if (idx === null) { App.toast('도감 QR이 아니거나 날짜가 지났어요. 친구에게 오늘 QR을 다시 보여 달라고 해 주세요.'); return; }
+                celebrate(idx, add(idx));
+            },
+            onFail: reason => {
+                App.toast(Scanner.failMessage(reason));
+                $('dexCodeRow').hidden = false;
+                $('dexCodeInput').focus();
+            }
+        });
+    }
+
     /** 친구 QR로 들어온 주소(?dex=8-27)를 읽고 바로 주소에서 지웁니다. */
     function intakeFromUrl() {
         const params = new URLSearchParams(location.search);
@@ -140,6 +166,7 @@ const Dex = (() => {
     function init() {
         render();
         $('btnDexQr').addEventListener('click', showQr);
+        $('btnDexScan').addEventListener('click', scan);
         $('btnDexCode').addEventListener('click', () => {
             $('dexCodeRow').hidden = !$('dexCodeRow').hidden;
             if (!$('dexCodeRow').hidden) $('dexCodeInput').focus();
@@ -153,5 +180,5 @@ const Dex = (() => {
 
     if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', init);
 
-    return { init, render, setMine, add, codeFor, wordCode, parseCode, dayNumber, badgeFor, WORDS };
+    return { init, render, setMine, add, codeFor, wordCode, parseCode, codeFromScan, dayNumber, badgeFor, WORDS };
 })();

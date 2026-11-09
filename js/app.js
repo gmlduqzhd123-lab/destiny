@@ -1,24 +1,18 @@
 /**
- * [App] 별빛 나침반 — 학생용 / 선생님용 테마 전환, 입력 → 결과 화면 전환, 탭, 풀이 어조, 공유
+ * [App] 별빛 나침반 — 학생용 / 선생님용 테마 전환, 입력 → 결과 화면 전환, 오늘 탭, 우정 케미, 탭, 공유
+ * 나머지 화면은 따로 나뉘어 있습니다:
+ *   js/ui.js 공용 도우미 · js/form.js 입력 화면 · js/saju-view.js 기질 탭 · js/kiosk.js 저장소·공용 기기 모드
  */
 const App = (() => {
     const $ = id => document.getElementById(id);
-    const STORE_USER = 'myeongun_user_v3';
-    const STORE_TONE = 'myeongun_tone';
-    const STORE_MODE = 'starcompass_mode';
-    const STORE_OMIKUJI = 'myeongun_omikuji';
-    const STORE_KIOSK = 'starcompass_kiosk';
-    // 공용 기기 모드에서는 개인 정보가 담기는 키를 기기에 쓰지 않고 메모리에만 둡니다.
-    const KIOSK_MEMORY_KEYS = [STORE_USER, STORE_OMIKUJI];
-    const KIOSK_IDLE_MS = 3 * 60 * 1000;
+    const { toast, copyText, appUrl, escapeHtml, shareOrCopy, dateLabel } = UI;
+    const store = Store;
+    const STORE_USER = Store.KEYS.user;
+    const STORE_TONE = Store.KEYS.tone;
+    const STORE_MODE = Store.KEYS.mode;
+    const STORE_OMIKUJI = Store.KEYS.omikuji;
     const MBTI_TYPES = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'];
-    const HISTORICAL_FIGURES = [
-        { name: '세종대왕', birth: '1397.05.15' },
-        { name: '이순신 장군', birth: '1545.04.28' },
-        { name: '신사임당', birth: '1504.10.29' },
-        { name: '정약용', birth: '1762.08.05' },
-        { name: '유관순 열사', birth: '1902.12.16' }
-    ];
+
 
     const SEALS = {
         student: [
@@ -47,37 +41,8 @@ const App = (() => {
         profile: null,
         today: null,
         tab: 'today',
-        compat: null,
-        kiosk: false
+        compat: null
     };
-    let kioskMemory = {};
-
-    // ---------- 저장소 (접근이 막힌 환경에서도 앱이 멈추지 않도록) ----------
-    const store = {
-        get(key) {
-            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) return key in kioskMemory ? kioskMemory[key] : null;
-            try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
-        },
-        set(key, v) {
-            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) { kioskMemory[key] = v; return; }
-            try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* 무시 */ }
-        },
-        remove(key) {
-            if (state.kiosk && KIOSK_MEMORY_KEYS.includes(key)) { delete kioskMemory[key]; return; }
-            try { localStorage.removeItem(key); } catch (e) { /* 무시 */ }
-        }
-    };
-
-    // 공용 기기 모드 여부는 기기 설정이므로 메모리 저장 규칙과 상관없이 실제 저장소에 둡니다.
-    function readKioskFlag() {
-        try { return localStorage.getItem(STORE_KIOSK) === '1'; } catch (e) { return false; }
-    }
-
-    function writeKioskFlag(on) {
-        try {
-            if (on) localStorage.setItem(STORE_KIOSK, '1'); else localStorage.removeItem(STORE_KIOSK);
-        } catch (e) { /* 저장이 막힌 기기에서는 이번 접속 동안만 유지 */ }
-    }
 
     function isTeacher() {
         return state.mode === 'teacher';
@@ -86,184 +51,6 @@ const App = (() => {
     function mbtiNick(mbti) {
         if (!mbti) return '';
         return (isTeacher() && FortuneData.mbti.teacherNick ? FortuneData.mbti.teacherNick[mbti] : FortuneData.mbti.nick[mbti]) || '';
-    }
-
-    // ---------- 입력 검증 (js/birth.js) ----------
-    const normalizeBirth = Birth.normalize;
-    const parseBirth = Birth.parse;
-    const resolveBirth = Birth.resolve;
-    const formatBirth = Birth.format;
-
-    function birthLabel(u) {
-        return u.cal === 'lunar' ? `음력 ${formatBirth(u.lunar)}${u.leap ? '(윤달)' : ''}` : formatBirth(u.birth);
-    }
-
-    function birthPreview(inputEl, noteEl, cal) {
-        const raw = inputEl.value.trim();
-        if (!raw) {
-            if (inputEl === $('birthDate')) {
-                const idx = new Date().getDate() % HISTORICAL_FIGURES.length;
-                const f1 = HISTORICAL_FIGURES[idx], f2 = HISTORICAL_FIGURES[(idx + 1) % HISTORICAL_FIGURES.length];
-                noteEl.textContent = isTeacher()
-                    ? `💡 수업 활용 팁: 역사 인물(예: ${f1.name} ${f1.birth}, ${f2.name} ${f2.birth})도 분석할 수 있어요.`
-                    : `💡 내 생일이나 역사 인물(예: ${f1.name} ${f1.birth}, ${f2.name} ${f2.birth})도 넣어 보세요!`;
-            } else {
-                noteEl.textContent = '';
-            }
-            noteEl.classList.remove('err');
-            return;
-        }
-        const b = resolveBirth(raw, cal);
-        if (b.error) {
-            noteEl.textContent = raw.replace(/\D/g, '').length >= 6 ? b.error : '';
-            noteEl.classList.add('err');
-            return;
-        }
-        const yp = Saju.calc({ y: b.y, m: b.m, d: b.d }).year;
-        const tti = `${yp.stem.kor}${yp.branch.kor}년(${yp.stem.hanja}${yp.branch.hanja}) ${yp.branch.animal}띠`;
-        if (b.lunar) {
-            const ly = +b.lunar.slice(0, 4), lm = +b.lunar.slice(4, 6), ld = +b.lunar.slice(6, 8);
-            noteEl.textContent = `✓ 음력 ${ly}년 ${b.leap ? '윤' : ''}${lm}월 ${ld}일 → 양력 ${b.y}년 ${b.m}월 ${b.d}일 · ${tti}`;
-        } else {
-            noteEl.textContent = `✓ 양력 ${b.y}년 ${b.m}월 ${b.d}일 · ${tti}`;
-        }
-        noteEl.classList.remove('err');
-    }
-
-    function mainCal() {
-        if ($('calType').value !== 'lunar') return 'solar';
-        return $('leapMonth').checked ? 'leap' : 'lunar';
-    }
-
-    function setCal(v) {
-        $('calType').value = v;
-        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-        $('leapWrap').style.display = v === 'lunar' ? 'flex' : 'none';
-        if (v !== 'lunar') $('leapMonth').checked = false;
-        birthPreview($('birthDate'), $('birthPreview'), mainCal());
-    }
-
-    function readForm() {
-        const name = $('userName').value.trim();
-        const gender = $('gender').value;
-        const mbti = $('mbti').value;
-        const time = $('birthTime').value;
-        const place = $('birthPlace').value;
-        if (!name) return { error: '이름(또는 별명)을 입력해 주세요.' };
-        const b = resolveBirth($('birthDate').value, mainCal());
-        if (b.error) return b;
-        if (!gender) return { error: '성별을 골라 주세요.' };
-        if (!mbti) return { error: 'MBTI 네 칸을 모두 골라 주세요. 모르면 "4문항으로 찾아보기"를 눌러 보세요.' };
-        const user = { name, birth: b.ymd, time, gender, mbti };
-        if (time && place !== 'none') user.place = place;
-        if (b.lunar) Object.assign(user, { cal: 'lunar', lunar: b.lunar, leap: b.leap });
-        return { user };
-    }
-
-    // ---------- 버튼형 입력 (성별 · MBTI) ----------
-    function setGender(v) {
-        $('gender').value = v || '';
-        document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-    }
-
-    function setMbti(v) {
-        const letters = (v || '').split('');
-        document.querySelectorAll('#mbtiPick .seg').forEach(seg => {
-            const want = letters[+seg.dataset.axis];
-            seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === want));
-        });
-        syncMbti();
-    }
-
-    function syncMbti() {
-        const letters = [...document.querySelectorAll('#mbtiPick .seg')].map(seg => {
-            const on = seg.querySelector('button.on');
-            return on ? on.dataset.v : '';
-        });
-        const full = letters.every(Boolean) ? letters.join('') : '';
-        $('mbti').value = full;
-        $('mbtiPreview').textContent = full ? `${full} · ${mbtiNick(full)}` : '';
-    }
-
-    function startMbtiQuiz() {
-        const box = $('mbtiQuiz');
-        const quizList = isTeacher() && ExtraData.teacherMbtiQuiz ? ExtraData.teacherMbtiQuiz : ExtraData.mbtiQuiz;
-        const answers = [];
-        const step = () => {
-            const i = answers.length;
-            if (i === quizList.length) {
-                box.style.display = 'none';
-                $('mbtiPick').style.display = '';
-                setMbti(answers.join(''));
-                $('mbtiPreview').textContent += ' (4문항으로 찾은 나의 유형이에요)';
-                return;
-            }
-            const q = quizList[i];
-            box.innerHTML = `<div class="qn">${i + 1} / ${quizList.length}${q.tip ? ' · ' + q.tip : ''}</div>
-                <div class="qq">${q.q}</div>
-                <div class="qa">
-                    <button type="button" data-v="${q.a[1]}">${q.a[0]}</button>
-                    <button type="button" data-v="${q.b[1]}">${q.b[0]}</button>
-                </div>`;
-            box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-                answers.push(b.dataset.v);
-                step();
-            }));
-        };
-        $('mbtiPick').style.display = 'none';
-        box.style.display = 'block';
-        step();
-    }
-
-    function fillForm(u) {
-        $('userName').value = u.name || '';
-        const lunar = u.cal === 'lunar' && u.lunar;
-        $('birthDate').value = lunar ? formatBirth(u.lunar) : (u.birth ? formatBirth(u.birth) : '');
-        $('leapMonth').checked = !!(lunar && u.leap);
-        setCal(lunar ? 'lunar' : 'solar');
-        setGender(u.gender);
-        setMbti(u.mbti);
-        $('birthTime').value = u.time || '';
-        $('birthPlace').value = u.place || (u.time ? 'none' : 'seoul');
-        $('timeMore').open = !!u.time;
-        timePreview();
-    }
-
-    // ---------- 태어난 시간 · 지역 보정 ----------
-    function fillPlaces() {
-        $('birthPlace').innerHTML = Saju.PLACES.map(g =>
-            `<optgroup label="${g.group}">${g.list.map(([id, name]) => `<option value="${id}">${name}</option>`).join('')}</optgroup>`
-        ).join('') + '<optgroup label="기타"><option value="none">해외·모름 (보정 안 함)</option></optgroup>';
-        $('birthPlace').value = 'seoul';
-    }
-
-    function correctionText(c, placeName) {
-        if (!c) return '';
-        const signed = n => `${n > 0 ? '+' : '−'}${Math.abs(n)}분`;
-        const parts = [];
-        if (c.lmt) parts.push('1908년 이전이라 지역 시각 그대로');
-        else if (c.lonMin) parts.push(`경도 ${signed(c.lonMin)}`);
-        if (c.dst) parts.push('서머타임 −60분');
-        if (c.eotMin) parts.push(`균시차 ${signed(c.eotMin)}`);
-        const notes = [];
-        if (c.offset === 510 || c.offset === 570) notes.push('당시 표준시 UTC+8:30 반영');
-        if (c.dayShift < 0) notes.push('보정하면 전날 밤이에요');
-        if (c.dayShift > 0) notes.push('보정하면 다음 날 새벽이에요');
-        return `${placeName} 기준 진태양시 ${c.solar} (${parts.join(', ') || '보정 없음'})` + (notes.length ? ` · ${notes.join(' · ')}` : '');
-    }
-
-    function timePreview() {
-        const note = $('timePreview');
-        const time = $('birthTime').value, placeId = $('birthPlace').value;
-        const b = resolveBirth($('birthDate').value, mainCal());
-        if (!time || placeId === 'none' || b.error) {
-            note.textContent = time && placeId === 'none' ? `입력한 ${time} 그대로 계산해요.` : '';
-            return;
-        }
-        const place = Saju.PLACE_MAP[placeId];
-        const [hh, mm] = time.split(':').map(Number);
-        const r = Saju.calc({ y: b.y, m: b.m, d: b.d, hour: hh, minute: mm, lon: place.lon });
-        note.textContent = '✓ ' + correctionText(r.correction, place.name);
     }
 
     // ---------- 테마 모드 전환 (🌱 학생용 / 🏫 선생님용) ----------
@@ -301,10 +88,10 @@ const App = (() => {
             : '이름, 생년월일, 성별, MBTI로 찾는 나의 별빛 기질과 우정 나침반';
 
         $('labelUserName').textContent = teacher ? '이름 (선생님 또는 분석할 학생)' : '이름 (또는 별명)';
-        const fig = HISTORICAL_FIGURES[new Date().getDate() % HISTORICAL_FIGURES.length];
+        const fig = Form.figureOfDay();
         $('userName').placeholder = teacher ? '예: 김선생, 학생 이름 또는 역사 인물' : `예: 김별빛 또는 ${fig.name}`;
         $('birthDate').placeholder = teacher ? '예: 1990.05.15 또는 2015.05.05' : `예: 2015.05.05 또는 ${fig.birth}(${fig.name})`;
-        birthPreview($('birthDate'), $('birthPreview'), mainCal());
+        Form.refreshBirthPreview();
         $('btnGenderF').textContent = teacher ? '여성' : '여자';
         $('btnGenderM').textContent = teacher ? '남성' : '남자';
         $('optPGenderM').textContent = teacher ? '남성(남학생)' : '남자';
@@ -368,7 +155,7 @@ const App = (() => {
 
         renderSealPalette();
         renderTeaser();
-        syncMbti();
+        Form.syncMbti();
         Tarot.setMode(state.mode);
         Journal.setMode(state.mode);
         if (state.user && state.today) {
@@ -400,7 +187,7 @@ const App = (() => {
 
     function showWelcome(u) {
         $('welcomeName').textContent = u.name;
-        $('welcomeMeta').textContent = `${birthLabel(u)} · ${u.mbti}`;
+        $('welcomeMeta').textContent = `${Form.birthLabel(u)} · ${u.mbti}`;
         $('welcomeCard').style.display = 'block';
         $('fortuneForm').style.display = 'none';
     }
@@ -422,15 +209,11 @@ const App = (() => {
         return g === 'M' ? '남자' : '여자';
     }
 
-    function dateLabel(d) {
-        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-    }
-
     function renderHeader() {
         const u = state.user;
         $('whoName').textContent = `${u.name} ${isTeacher() ? '님' : '학생'}`;
         const y = state.profile.saju.year;
-        const bl = u.cal === 'lunar' ? `${birthLabel(u)} (양력 ${formatBirth(u.birth)})` : formatBirth(u.birth);
+        const bl = u.cal === 'lunar' ? `${Form.birthLabel(u)} (양력 ${Birth.format(u.birth)})` : Birth.format(u.birth);
         const placeInfo = u.time && Saju.PLACE_MAP[u.place];
         const pl = placeInfo ? ' ' + placeInfo.name.split('·')[0] : '';
         $('whoMeta').textContent = `${bl}${u.time ? ' ' + u.time + pl : ''} · ${y.stem.kor}${y.branch.kor}년 ${y.branch.animal}띠 · ${genderLabel(u.gender)} · ${u.mbti}`;
@@ -595,198 +378,7 @@ const App = (() => {
         return Engine.pick(ExtraData.quotes, Engine.prng('quote-' + Engine.ymd(new Date())));
     }
 
-    function renderCross() {
-        const u = state.user, me = state.profile.saju.day.stem;
-        const c = ExtraData.cross[me.el][u.mbti[0]];
-        $('crossName').textContent = `${Saju.EL_HANJA[me.el]} × ${u.mbti[0] === 'E' ? '외향(E)' : '내향(I)'} · ${c.name}`;
-        $('crossText').textContent = c.text;
-        const J = ExtraData.judge;
-        let line;
-        if (me.el === 'wood') {
-            line = J.wood[u.mbti[3]];
-        } else {
-            const bornRational = J.rational.includes(me.el);
-            const nowRational = u.mbti[2] === 'T';
-            line = bornRational === nowRational ? J.same : J.diff(bornRational ? '이성·원칙' : '감성·직관', nowRational ? '사고(T)' : '공감(F)');
-        }
-        $('crossJudge').textContent = `${u.mbti} · ${mbtiNick(u.mbti)}. ${line}`;
-    }
-
-    function ageOn(date) {
-        const u = state.user;
-        const y = +u.birth.slice(0, 4), m = +u.birth.slice(4, 6), d = +u.birth.slice(6, 8);
-        let age = date.getFullYear() - y;
-        if (date.getMonth() + 1 < m || (date.getMonth() + 1 === m && date.getDate() < d)) age--;
-        return age;
-    }
-
-    function periodText(pillar, unit) {
-        const me = state.profile.saju.day.stem;
-        const god = SajuData.sipsin[Saju.tenGod(me, pillar.stem.i)];
-        const rel = Saju.branchRelation(state.profile.saju.day.branch.i, pillar.branch.i);
-        return {
-            title: `${pillar.stem.hanja}${pillar.branch.hanja}${unit} · ${god.name}(${god.hanja})의 ${unit === '년' ? '해' : '달'}`,
-            text: `${god.dw}입니다. 핵심 키워드는 [${god.kw}]. ${ExtraData.periodRel[rel]}`.trim()
-        };
-    }
-
-    function renderFlow() {
-        const me = state.profile.saju.day.stem;
-        const dw = Saju.daewoon(state.profile.saju, state.user.gender);
-        const age = ageOn(new Date());
-        let cur = null;
-        dw.list.forEach(p => { if (age >= p.age) cur = p; });
-        $('dwSub').textContent = `10년 주기 · ${dw.startAge}세 시작`;
-        $('dwList').innerHTML = dw.list.map(p => {
-            const god = SajuData.sipsin[Saju.tenGod(me, p.stem.i)];
-            return `<div class="dw${p === cur ? ' now' : ''}">
-                ${p === cur ? '<div class="dw-now-label">지금</div>' : ''}
-                <div class="age">${p.age}세~</div>
-                <div class="gz"><span class="${EL_CLASS(p.stem.el)}" style="background:none">${p.stem.hanja}</span><br><span class="${EL_CLASS(p.branch.el)}" style="background:none">${p.branch.hanja}</span></div>
-                <div class="god">${god.name}</div>
-            </div>`;
-        }).join('');
-        if (cur) {
-            const god = SajuData.sipsin[Saju.tenGod(me, cur.stem.i)];
-            $('dwNow').textContent = `지금은 ${cur.age}세부터 이어지는 ${cur.stem.hanja}${cur.branch.hanja} 대운, ${god.name}(${god.hanja})의 10년 계절입니다. ${god.dw}이며, 중심 주제는 [${god.kw}]입니다.`;
-        } else {
-            $('dwNow').textContent = `첫 10년 대운은 ${dw.startAge}세에 시작됩니다. 그전까지는 타고난 자연물 기운이 순수하게 흐릅니다.`;
-        }
-        const now = state.today.tp;
-        const se = periodText(now.year, '년');
-        const wo = periodText(now.month, '월');
-        $('seunTitle').textContent = '올해 · ' + se.title;
-        $('seunText').textContent = se.text;
-        $('wolunTitle').textContent = '이달 · ' + wo.title;
-        $('wolunText').textContent = wo.text;
-    }
-
-    function pillarCell(g, isMe) {
-        if (!g) return `<div class="pillar-cell empty">?<small>시간 모름</small></div>`;
-        return `<div class="pillar-cell ${EL_CLASS(g.el)}${isMe ? ' me' : ''}">${g.hanja}<small>${g.kor} · ${Saju.EL_HANJA[g.el]}</small></div>`;
-    }
-
-    function renderCoaching(stemIdx) {
-        if (!SajuData.coaching || !SajuData.coaching[stemIdx]) return;
-        const c = SajuData.coaching[stemIdx];
-        $('coachList').innerHTML = `
-            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.attitude)}" title="터치하면 복사됩니다"><b><span>👀 교실 · 학습 태도 특징</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.attitude}</div>
-            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.praise)}" title="터치하면 복사됩니다"><b><span>👏 효과적인 칭찬 · 동기부여 처방</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.praise}</div>
-            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.guide)}" title="터치하면 복사됩니다"><b><span>🧭 생활지도 · 갈등 코칭 팁</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.guide}</div>
-            <div class="coach-item" role="button" tabindex="0" data-copy="${escapeHtml(c.record)}" title="터치하면 복사됩니다"><b><span>📝 학부모 상담 · 행동발달 기록 예시</span><small class="copy-hint">📋 터치하여 복사</small></b>${c.record}</div>`;
-    }
-
-    function renderEduTopic() {
-        if (!ExtraData.eduTopics) return;
-        const topic = ExtraData.eduTopics[state.eduTab] || ExtraData.eduTopics.lunar;
-        document.querySelectorAll('#eduTabs button').forEach(b => b.classList.toggle('on', b.dataset.edu === state.eduTab));
-        $('eduBody').innerHTML = `<h4><span>${topic.title}</span><small class="copy-hint" style="float:right;font-weight:500;font-size:0.72rem;color:var(--muted);">📋 터치하여 판서 요약 복사</small></h4>${topic.body}`;
-    }
-
-    function renderSaju() {
-        const p = state.profile, sj = p.saju, me = sj.day.stem;
-        const cols = isTeacher()
-            ? [['시주(時)', sj.hour], ['일주(日)', sj.day], ['월주(月)', sj.month], ['년주(年)', sj.year]]
-            : [['태어난 시', sj.hour], ['나(태어난 날)', sj.day], ['태어난 달', sj.month], ['태어난 해(띠)', sj.year]];
-        $('pillarGrid').innerHTML = cols.map(([label, pl], i) => {
-            const stemGod = pl ? (i === 1 ? '나(일간)' : SajuData.sipsin[Saju.tenGod(me, pl.stem.i)].name) : '';
-            const branchGod = pl ? SajuData.sipsin[Saju.tenGodOfBranch(me, pl.branch.i)].name : '';
-            return `<div>
-                <div class="pillar-cap">${label}</div>
-                <div class="pillar-god">${stemGod}</div>
-                ${pillarCell(pl && pl.stem, i === 1)}
-                ${pillarCell(pl && pl.branch, false)}
-                <div class="pillar-god">${branchGod}</div>
-            </div>`;
-        }).join('');
-        $('sajuSub').textContent = sj.hasTime ? '8글자' : '6글자 (시간 모름)';
-        const u = state.user;
-        let note = '';
-        if (!sj.hasTime) note = '태어난 시간을 입력하면 시주까지 계산해 여덟 글자를 모두 볼 수 있어요.';
-        else if (sj.correction) note = `출생 ${sj.correction.wall} → ${correctionText(sj.correction, Saju.PLACE_MAP[u.place].name)}. 시주는 실제 태양 시각(진태양시)으로 정했습니다.`;
-        else note = `출생 ${u.time}을 그대로 계산했습니다. 태어난 지역을 고르면 실제 태양 시각으로 보정할 수 있어요.`;
-        $('sajuNote').textContent = note;
-        $('sajuNote').style.display = note ? 'block' : 'none';
-
-        $('ilganHanja').className = 'ilgan-hanja ' + EL_CLASS(me.el);
-        $('ilganHanja').textContent = me.hanja;
-        $('ilganTitle').textContent = `${me.hanja}${Saju.EL_HANJA[me.el]} · ${p.ilgan.title}`;
-        $('ilganSub').textContent = `${me.kor}${SajuData.elements[me.el].kor} · ${me.yang ? '양(陽·활발한)' : '음(陰·차분한)'} ${SajuData.elements[me.el].nature}의 기운`;
-        $('ilganTrait').textContent = p.ilgan.trait;
-        $('ilganStrength').textContent = p.ilgan.strength;
-        $('ilganCaution').textContent = p.ilgan.caution;
-
-        renderCoaching(me.i);
-        renderEduTopic();
-        renderOhaeng();
-        renderCross();
-        renderFlow();
-
-        const e = SajuData.elements[p.weak];
-        const am = isTeacher() ? (e.teacherAmulet || e.amulet) : (e.studentAmulet || e.amulet);
-        $('amuletBox').innerHTML = `<div class="big">${e.hanja}</div><div class="line">${am.name}</div><div class="desc">${am.desc}</div>`;
-        $('amuletNote').textContent = `나에게 조금 부족한 ${e.hanja}(${e.nature}) 기운을 따뜻하게 채워 주는 응원 부적입니다.`;
-    }
-
-    function renderOhaeng() {
-        const c = state.profile.counts;
-        const order = Saju.EL;
-        const max = Math.max(3, ...order.map(el => c[el]));
-        const cx = 80, cy = 82, R = 62;
-        const pt = (i, r) => {
-            const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
-            return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-        };
-        const color = el => getComputedStyle(document.documentElement).getPropertyValue('--' + el).trim();
-        const lineCol = getComputedStyle(document.documentElement).getPropertyValue('--line').trim() || '#3a332b';
-        const goldCol = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#ffd166';
-        let svg = '';
-        [1, 0.66, 0.33].forEach(f => {
-            svg += `<polygon points="${order.map((_, i) => pt(i, R * f).join(',')).join(' ')}" fill="none" stroke="${lineCol}" stroke-width="1"/>`;
-        });
-        svg += `<polygon points="${order.map((el, i) => pt(i, Math.max(4, R * c[el] / max)).join(',')).join(' ')}" fill="rgba(255,209,102,0.22)" stroke="${goldCol}" stroke-width="1.5"/>`;
-        order.forEach((el, i) => {
-            const [x, y] = pt(i, R + 12);
-            svg += `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="${color(el)}" font-family="Gowun Batang, serif">${Saju.EL_HANJA[el]}</text>`;
-        });
-        $('ohaengSvg').innerHTML = svg;
-
-        const total = order.reduce((a, el) => a + c[el], 0);
-        $('ohaengBars').innerHTML = order.map(el => `
-            <div class="oh-row">
-                <span class="nm" style="color:${color(el)}">${Saju.EL_HANJA[el]}</span>
-                <span class="track"><i style="width:${(c[el] / total) * 100}%; background:${color(el)}"></i></span>
-                <span class="ct">${c[el]}</span>
-            </div>`).join('');
-
-        const p = state.profile;
-        const lines = [SajuData.balance.strong(p.strong)];
-        lines.push(c[p.weak] === 0 ? SajuData.balance.missing(p.weak) : SajuData.balance.weak(p.weak));
-        $('ohaengText').textContent = lines.join(' ');
-    }
-
     // ---------- 우정 케미 / 궁합 ----------
-    function readPartner() {
-        const name = $('pName').value.trim();
-        const birth = $('pBirth').value.trim();
-        const gender = $('pGender').value;
-        const mbti = $('pMbti').value;
-        if (!name) return { error: '친구(상대) 이름을 입력해 주세요.' };
-        const b = resolveBirth(birth, $('pCal').value);
-        if (b.error) return b;
-        if (!gender) return { error: '성별을 선택해 주세요.' };
-        return { partner: { name, birth: b.ymd, time: '', gender, mbti } };
-    }
-
-    function fillPartner(p) {
-        $('pName').value = p.name;
-        $('pCal').value = 'solar';
-        $('pBirth').value = formatBirth(p.birth);
-        birthPreview($('pBirth'), $('pBirthPreview'), 'solar');
-        $('pGender').value = p.gender;
-        $('pMbti').value = p.mbti;
-    }
-
     function runCompat(partner) {
         state.compat = Compat.compute(state.user, partner);
         renderCompat();
@@ -815,22 +407,6 @@ const App = (() => {
                 <div class="hd"><span>${p.title}</span><span style="color:var(--gold)">${p.score} / ${p.max}</span></div>
                 <div class="tx">${escapeHtml(p.text)}</div>
             </div>`).join('');
-    }
-
-    function escapeHtml(str) {
-        return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-    }
-
-    async function shareOrCopy(title, text, url) {
-        if (navigator.share) {
-            try {
-                await navigator.share({ title, text, url });
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') return;
-            }
-        }
-        copyText(`${text}\n${url}`, '링크가 복사되었습니다. 원하는 곳에 붙여 넣어 주세요.');
     }
 
     function keepsakeData() {
@@ -867,7 +443,7 @@ const App = (() => {
         renderToday();
         renderSelfBirthday();
         renderOmikuji();
-        renderSaju();
+        SajuView.render();
         renderCompat();
         renderKeepsake();
         i18nRefresh();
@@ -877,12 +453,12 @@ const App = (() => {
     function switchTab(tab) {
         state.tab = tab;
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('on', p.dataset.panel === tab));
-        document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+        document.querySelectorAll('#tabbar button').forEach(b => {
+            b.classList.toggle('on', b.dataset.tab === tab);
+            if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+        });
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (tab === 'saju') {
-            const list = $('dwList'), nowEl = list.querySelector('.now');
-            if (nowEl) list.scrollLeft = nowEl.offsetLeft - list.offsetLeft - (list.clientWidth - nowEl.clientWidth) / 2;
-        }
+        if (tab === 'saju') SajuView.centerFlow();
     }
 
     // ---------- 화면 전환 ----------
@@ -894,7 +470,7 @@ const App = (() => {
         $('tabbar').style.display = 'flex';
         Tarot.setUser(Fortune.userKey(state.user), Engine.ymd(new Date()));
         if (typeof Dex !== 'undefined') Dex.setMine(state.profile.saju.day.stem.i);
-        if (!state.kiosk) Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
+        if (!Kiosk.isOn()) Journal.recordVisit(Fortune.userKey(state.user), state.today.god.name, state.today.god.hanja, Fortune.average(state.today.scores));
         state.compat = null;
         $('compatResult').style.display = 'none';
         $('reframeText').style.display = 'none';
@@ -912,28 +488,16 @@ const App = (() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function clearPerson() {
+        state.user = null;
+        state.profile = null;
+        state.today = null;
+        state.compat = null;
+        $('compatResult').style.display = 'none';
+        closeSheet();
+    }
+
     // ---------- 공유 ----------
-    function toast(msg) {
-        const el = $('toast');
-        el.textContent = msg;
-        el.classList.add('show');
-        clearTimeout(toast._t);
-        toast._t = setTimeout(() => el.classList.remove('show'), 2200);
-    }
-
-    function appUrl() {
-        return location.origin + location.pathname;
-    }
-
-    async function copyText(text, okMsg) {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast(okMsg);
-        } catch (e) {
-            toast('이 환경에서는 복사가 지원되지 않습니다.');
-        }
-    }
-
     function shareSummary() {
         const u = state.user, s = state.today.scores;
         const g = state.today.god, me = state.profile.saju.day.stem, gr = todayGrade();
@@ -957,112 +521,6 @@ const App = (() => {
         copyText(text + '\n' + appUrl(), '결과가 복사되었습니다. 원하는 곳에 붙여 넣어 주세요.');
     }
 
-    // ---------- 공용 기기(태블릿) 모드 ----------
-    function applyKiosk() {
-        document.body.classList.toggle('kiosk', state.kiosk);
-        $('kioskBar').hidden = !state.kiosk;
-        if (state.kiosk) {
-            $('rememberMe').checked = false;
-            $('welcomeCard').style.display = 'none';
-            if ($('inputView').style.display !== 'none') showForm();
-            if (state.tab === 'journal') switchTab('today');
-        }
-    }
-
-    function enableKiosk() {
-        if (state.kiosk) return;
-        const ok = window.confirm('공용 기기 모드를 켤까요?\n\n· 이름·생일 같은 정보가 이 기기에 저장되지 않아요.\n· "다음 친구" 버튼이나 3분 동안 쓰지 않으면 처음 화면으로 돌아가요.\n· 이 기기에 기억된 정보는 지금 지워져요.');
-        if (!ok) return;
-        try { localStorage.removeItem(STORE_USER); localStorage.removeItem(STORE_OMIKUJI); } catch (e) { /* 무시 */ }
-        // 마음 일기 기록에는 이름·생일이 들어 있어 다음 사람이 볼 수 있으므로 지울지 한 번 더 묻습니다.
-        const diaryPeople = Journal.peopleCount();
-        if (diaryPeople > 0 && window.confirm(`이 기기에 마음 일기·교단 일지 기록이 ${diaryPeople}명분 남아 있어요.\n공용 기기에서는 다른 사람이 볼 수 있으니 지울까요?\n(지우면 되돌릴 수 없어요)`)) {
-            Journal.clearAll();
-        }
-        state.kiosk = true;
-        kioskMemory = {};
-        writeKioskFlag(true);
-        applyKiosk();
-        nextPerson();
-        toast('🔒 공용 기기 모드를 켰어요. 정보가 저장되지 않아요.');
-    }
-
-    function disableKiosk() {
-        if (!window.confirm('공용 기기 모드를 끌까요? 끄면 다시 정보를 기기에 기억할 수 있어요.')) return;
-        state.kiosk = false;
-        kioskMemory = {};
-        writeKioskFlag(false);
-        applyKiosk();
-        $('rememberMe').checked = true;
-        toast('공용 기기 모드를 껐어요.');
-    }
-
-    // 다음 사람이 앞 사람의 정보를 볼 수 없도록 화면과 입력값을 모두 비웁니다.
-    function nextPerson(reason) {
-        kioskMemory = {};
-        state.user = null;
-        state.profile = null;
-        state.today = null;
-        state.compat = null;
-        $('fortuneForm').reset();
-        $('rememberMe').checked = !state.kiosk;
-        setCal('solar');
-        setGender('');
-        setMbti('');
-        $('mbtiQuiz').style.display = 'none';
-        $('mbtiPick').style.display = '';
-        $('birthPlace').value = 'seoul';
-        $('timeMore').open = false;
-        $('timePreview').textContent = '';
-        $('formError').textContent = '';
-        $('compatForm').reset();
-        $('pBirthPreview').textContent = '';
-        $('compatError').textContent = '';
-        $('compatResult').style.display = 'none';
-        $('memoText').value = '';
-        const q = $('tarotQuestion');
-        if (q.value) { q.value = ''; q.dispatchEvent(new Event('change')); }
-        Keepsake.clearStamps();
-        closeSheet();
-        document.dispatchEvent(new CustomEvent('starcompass:reset'));
-        showInput();
-        birthPreview($('birthDate'), $('birthPreview'), 'solar');
-        if (reason === 'idle') toast('3분 동안 쓰지 않아 처음 화면으로 돌아왔어요.');
-        else if (state.kiosk) toast('다음 친구 차례예요! 🌟');
-    }
-
-    function startIdleWatch() {
-        let last = Date.now();
-        const touch = () => { last = Date.now(); };
-        ['pointerdown', 'keydown', 'input', 'wheel'].forEach(ev => document.addEventListener(ev, touch, { passive: true, capture: true }));
-        setInterval(() => {
-            if (!state.kiosk || Date.now() - last < KIOSK_IDLE_MS) return;
-            const inUse = $('resultView').style.display === 'block' || $('userName').value || $('birthDate').value;
-            last = Date.now();
-            if (inUse) nextPerson('idle');
-        }, 10000);
-    }
-
-    function bindKiosk() {
-        document.addEventListener('click', e => {
-            if (e.target.closest('[data-kiosk-on]')) { e.preventDefault(); enableKiosk(); }
-        });
-        $('btnNextPerson').addEventListener('click', () => nextPerson());
-        // 학생이 실수로 끄지 않도록 2초 동안 꾹 눌러야 해제합니다.
-        const off = $('btnKioskOff');
-        let pressTimer = null, fired = false;
-        const cancel = () => { clearTimeout(pressTimer); pressTimer = null; off.classList.remove('pressing'); };
-        off.addEventListener('pointerdown', () => {
-            fired = false;
-            off.classList.add('pressing');
-            pressTimer = setTimeout(() => { fired = true; cancel(); disableKiosk(); }, 2000);
-        });
-        ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => off.addEventListener(ev, cancel));
-        off.addEventListener('click', () => { if (!fired) toast('끄려면 [해제] 버튼을 2초 동안 꾹 눌러 주세요.'); });
-        off.addEventListener('keydown', e => { if (e.key === 'Enter' && e.shiftKey) disableKiosk(); });
-        startIdleWatch();
-    }
-
     // ---------- 초기화 ----------
     function bind() {
         document.querySelectorAll('#modeSwitch button').forEach(b => b.addEventListener('click', () => {
@@ -1072,26 +530,11 @@ const App = (() => {
             toast(m === 'teacher' ? '🏫 선생님용 테마로 전환했습니다.' : '🌱 학생용 테마로 전환했습니다.');
         }));
 
-        document.querySelectorAll('#eduTabs button').forEach(b => b.addEventListener('click', () => {
-            state.eduTab = b.dataset.edu;
-            renderEduTopic();
-        }));
-
         $('btnReportCurrent').addEventListener('click', () => Classroom.printCurrent(state.user));
         $('btnSelfBday').addEventListener('click', openSelfBirthday);
         $('btnSelfBdaySave').addEventListener('click', () => BirthdayCard.download($('selfBdayCanvas'), `생일카드_${state.user.name}.png`));
         $('btnSelfBdayClose').addEventListener('click', () => { $('bdayModal').hidden = true; });
         $('bdayModal').addEventListener('click', e => { if (e.target === $('bdayModal')) $('bdayModal').hidden = true; });
-        $('coachList').addEventListener('click', e => {
-            const item = e.target.closest('.coach-item[data-copy]');
-            if (item) copyText(item.dataset.copy, '📋 코칭·행발 문구가 복사되었습니다. 상담·행발 기록에 붙여 넣어 보세요.');
-        });
-        $('eduBody').addEventListener('click', () => {
-            const topic = ExtraData.eduTopics && (ExtraData.eduTopics[state.eduTab] || ExtraData.eduTopics.lunar);
-            if (topic && topic.copyText) {
-                copyText(topic.copyText, '📋 수업 판서·발문 요약이 복사되었습니다. 수업안·학급 게시판에 붙여 넣어 보세요.');
-            }
-        });
         $('quoteCard').addEventListener('click', () => {
             const q = todayQuote();
             const head = isTeacher() ? '[🏫 오늘의 학급·조회 명언]' : '[🌟 오늘의 별빛 명언]';
@@ -1113,31 +556,15 @@ const App = (() => {
         });
         $('fortuneForm').addEventListener('submit', e => {
             e.preventDefault();
-            const r = readForm();
+            const r = Form.read();
             $('formError').textContent = r.error || '';
             if (r.error) return;
             state.user = r.user;
-            if ($('rememberMe').checked && !state.kiosk) store.set(STORE_USER, r.user);
-            else if (!state.kiosk) store.remove(STORE_USER);
+            if ($('rememberMe').checked && !Kiosk.isOn()) store.set(STORE_USER, r.user);
+            else if (!Kiosk.isOn()) store.remove(STORE_USER);
             showResult();
         });
 
-        $('birthDate').addEventListener('input', () => birthPreview($('birthDate'), $('birthPreview'), mainCal()));
-        $('birthDate').addEventListener('blur', e => {
-            const n = normalizeBirth(e.target.value);
-            if (n) e.target.value = formatBirth(n);
-        });
-        document.querySelectorAll('.seg[data-for="calType"] button').forEach(b => b.addEventListener('click', () => { setCal(b.dataset.v); timePreview(); }));
-        $('leapMonth').addEventListener('change', () => { birthPreview($('birthDate'), $('birthPreview'), mainCal()); timePreview(); });
-        ['birthTime', 'birthPlace'].forEach(id => $(id).addEventListener('input', timePreview));
-        $('birthPlace').addEventListener('change', timePreview);
-        $('birthDate').addEventListener('input', timePreview);
-        document.querySelectorAll('.seg[data-for="gender"] button').forEach(b => b.addEventListener('click', () => setGender(b.dataset.v)));
-        document.querySelectorAll('#mbtiPick .seg button').forEach(b => b.addEventListener('click', () => {
-            b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-            syncMbti();
-        }));
-        $('btnMbtiQuiz').addEventListener('click', startMbtiQuiz);
         $('btnQuick').addEventListener('click', () => {
             state.user = store.get(STORE_USER);
             if (state.user) showResult(); else showForm();
@@ -1172,19 +599,12 @@ const App = (() => {
 
         $('compatForm').addEventListener('submit', e => {
             e.preventDefault();
-            const r = readPartner();
+            const r = Form.readPartner();
             $('compatError').textContent = r.error || '';
             if (r.error) return;
             runCompat(r.partner);
             $('compatResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-        $('pBirth').addEventListener('blur', e => {
-            const n = normalizeBirth(e.target.value);
-            if (n) e.target.value = formatBirth(n);
-        });
-        const pPreview = () => birthPreview($('pBirth'), $('pBirthPreview'), $('pCal').value);
-        $('pBirth').addEventListener('input', pPreview);
-        $('pCal').addEventListener('change', pPreview);
         $('btnInvite').addEventListener('click', () => {
             shareOrCopy(
                 '별빛 나침반 앱 초대',
@@ -1224,7 +644,7 @@ const App = (() => {
         Tarot.init();
         Journal.init(ok => toast(ok ? '오늘의 일기를 저장했습니다.' : '이 환경에서는 기록을 저장할 수 없습니다.'));
         $('pMbti').innerHTML = '<option value="">MBTI 모름</option>' + MBTI_TYPES.map(t => `<option>${t}</option>`).join('');
-        fillPlaces();
+        Form.fillPlaces();
 
         const savedMode = store.get(STORE_MODE);
         setMode(savedMode === 'teacher' ? 'teacher' : 'student');
@@ -1233,24 +653,24 @@ const App = (() => {
             $('inviteBanner').textContent = '개인정보 보호를 위해 이전 초대 링크의 정보는 불러오지 않습니다. 두 사람의 케미는 서로 동의한 정보를 직접 입력해 확인해 주세요.';
             $('inviteBanner').style.display = 'block';
         }
-        state.kiosk = readKioskFlag();
-        applyKiosk();
-        const saved = state.kiosk ? null : store.get(STORE_USER);
+        Kiosk.init();
+        const saved = Kiosk.isOn() ? null : store.get(STORE_USER);
         if (saved && saved.name && saved.birth && saved.gender && saved.mbti) {
-            fillForm(saved);
+            Form.fill(saved);
             showWelcome(saved);
         }
         state.tone = store.get(STORE_TONE) === 'direct' ? 'direct' : 'gentle';
         bind();
-        bindKiosk();
+        Form.bind();
+        SajuView.bind();
     }
 
     document.addEventListener('DOMContentLoaded', init);
 
-    const isKiosk = () => state.kiosk;
-
     return {
-        state, store, toast, copyText, appUrl, switchTab, setMode, isKiosk, enableKiosk, nextPerson, isOmikujiDrawn,
-        normalizeBirth, parseBirth, resolveBirth, formatBirth, escapeHtml, isTeacher, mbtiNick
+        state, store, toast, copyText, appUrl, switchTab, setMode, isOmikujiDrawn, showForm, showInput, clearPerson,
+        isKiosk: Kiosk.isOn, enableKiosk: Kiosk.enable, nextPerson: Kiosk.nextPerson,
+        normalizeBirth: Birth.normalize, parseBirth: Birth.parse, resolveBirth: Birth.resolve, formatBirth: Birth.format,
+        escapeHtml, isTeacher, mbtiNick
     };
 })();

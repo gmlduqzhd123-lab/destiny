@@ -1,11 +1,7 @@
 // E2E 공통 도우미
-const FONT_HOSTS = /fonts\.googleapis\.com|fonts\.gstatic\.com/;
-
 async function open(page, path = '/') {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    // 외부 글꼴은 테스트 환경에 따라 막힐 수 있어 미리 끊어 둡니다.
-    await page.route(FONT_HOSTS, r => r.abort());
     await page.goto(path);
     return errors;
 }
