@@ -11,7 +11,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Playwright 1.56은 Ubuntu 26.04를 지원하지 않아 실행 환경을 24.04로 고정합니다.
+    # (Playwright를 올릴 때 함께 ubuntu-latest로 되돌릴 수 있습니다.)
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
